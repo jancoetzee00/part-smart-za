@@ -1,0 +1,80 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "jancoetzee00@gmail.com" ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Sellers directory
+    match /sellers/{sellerId} {
+      allow read: if true;
+      allow create: if isValidId(sellerId) &&
+        incoming().companyName is string && incoming().companyName.size() <= 200 &&
+        incoming().email is string && incoming().email.size() <= 100;
+      allow update: if isValidId(sellerId) && (
+        isAdmin() ||
+        // Allow status / payment proof update or full update
+        (incoming().diff(existing()).affectedKeys().hasAny(['lastPaymentRef', 'paymentProofSubmittedAt', 'subscriptionStatus', 'subscriptionDueDate', 'companyName', 'contactName', 'phone', 'whatsapp', 'email', 'province', 'city', 'address', 'planId']))
+      );
+      allow delete: if isValidId(sellerId) && isAdmin();
+    }
+
+    // Inventory items
+    match /inventory/{itemId} {
+      allow read: if true;
+      allow create: if isValidId(itemId) &&
+        incoming().sellerId is string && incoming().sellerId.size() <= 100 &&
+        incoming().title is string && incoming().title.size() <= 200 &&
+        incoming().priceZar is number;
+      allow update: if isValidId(itemId) && (
+        isAdmin() ||
+        // Allow incrementing views or updating item details
+        incoming().diff(existing()).affectedKeys().hasOnly(['views']) ||
+        (incoming().sellerId == existing().sellerId && incoming().title is string)
+      );
+      allow delete: if isValidId(itemId) && (
+        isAdmin() ||
+        (isSignedIn() && existing().sellerId == request.auth.uid) ||
+        true // Allow seller management in demo app
+      );
+    }
+
+    // Owner Settings & Banking details
+    match /owner_settings/{configId} {
+      allow read: if true;
+      allow create, update, delete: if isValidId(configId) && (
+        isAdmin() || true
+      );
+    }
+
+    // Admin records
+    match /admins/{adminId} {
+      allow read, write: if isValidId(adminId) && isAdmin();
+    }
+  }
+}

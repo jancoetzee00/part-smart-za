@@ -10,44 +10,47 @@ import {
 
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
-    id: 'starter',
-    name: 'Starter Seller',
+    id: 'basic',
+    name: 'Basic',
     priceZar: 450,
     maxListings: 10,
-    description: 'Ideal for independent workshops & specialized spares providers.',
+    description: 'Essential advertising for small auto scrap yards & local spares shops.',
     features: [
       'Up to 10 active inventory listings',
       'Direct WhatsApp & Phone lead routing',
       'Standard search directory placement',
-      'Monthly payment cycle'
+      'Basic listing views counter',
+      'Community email support'
     ]
   },
   {
     id: 'pro',
-    name: 'Commercial Pro',
+    name: 'Pro',
     priceZar: 850,
-    maxListings: 35,
-    description: 'Perfect for truck breakers, auto scrap yards, and equipment suppliers.',
+    maxListings: 50,
+    description: 'High-visibility advertising for commercial truck breakers & equipment suppliers.',
     features: [
-      'Up to 35 active inventory listings',
-      'Featured badge on top search results',
+      'Up to 50 active inventory listings',
+      'Featured Yard Badge on search results',
+      'Priority Province & City search ranking',
       'Direct WhatsApp & Phone lead routing',
-      'Detailed inquiry analytics & views counter',
-      'Priority support'
+      'Detailed buyer inquiry analytics',
+      'Priority Email & WhatsApp support'
     ]
   },
   {
-    id: 'dealer_unlimited',
-    name: 'Heavy Dealer Unlimited',
+    id: 'enterprise',
+    name: 'Enterprise',
     priceZar: 1850,
-    maxListings: 999,
-    description: 'For major equipment dealers, commercial fleet breakers, and nationwide yards.',
+    maxListings: 9999,
+    description: 'Maximum exposure & unlimited listings for major equipment dealers & fleet yards.',
     features: [
       'Unlimited inventory listings',
       'Top homepage banner exposure',
       'Verified Heavy Dealer badge',
-      'Bulk inventory upload assistant',
-      'Dedicated account manager & instant EFT auto-check'
+      'Bulk inventory CSV upload assistant',
+      'Dedicated account manager',
+      'Instant auto-check EFT verification'
     ]
   }
 ];

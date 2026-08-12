@@ -13,7 +13,7 @@ export type SAProvince =
   | 'North West'
   | 'Northern Cape';
 
-export type SubscriptionPlanId = 'starter' | 'pro' | 'dealer_unlimited';
+export type SubscriptionPlanId = 'starter' | 'basic' | 'pro' | 'dealer_unlimited' | 'enterprise';
 
 export interface SubscriptionPlan {
   id: SubscriptionPlanId;

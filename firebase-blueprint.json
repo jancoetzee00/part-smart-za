@@ -1,0 +1,96 @@
+{
+  "entities": {
+    "Seller": {
+      "title": "Seller",
+      "description": "Commercial breaker or equipment seller yard",
+      "type": "object",
+      "properties": {
+        "companyName": { "type": "string", "maxLength": 200 },
+        "contactName": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 50 },
+        "whatsapp": { "type": "string", "maxLength": 50 },
+        "email": { "type": "string", "maxLength": 100 },
+        "province": { "type": "string", "maxLength": 50 },
+        "city": { "type": "string", "maxLength": 100 },
+        "address": { "type": "string", "maxLength": 300 },
+        "planId": { "type": "string", "maxLength": 50 },
+        "subscriptionStatus": { "type": "string", "maxLength": 50 },
+        "subscriptionDueDate": { "type": "string", "maxLength": 100 },
+        "lastPaymentRef": { "type": "string", "maxLength": 100 },
+        "paymentProofSubmittedAt": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["companyName", "contactName", "phone", "whatsapp", "email", "province", "city", "planId", "subscriptionStatus"]
+    },
+    "InventoryItem": {
+      "title": "InventoryItem",
+      "description": "Auto spare, truck part, or heavy machinery inventory listing",
+      "type": "object",
+      "properties": {
+        "sellerId": { "type": "string", "maxLength": 100 },
+        "sellerName": { "type": "string", "maxLength": 200 },
+        "sellerPhone": { "type": "string", "maxLength": 50 },
+        "sellerWhatsapp": { "type": "string", "maxLength": 50 },
+        "title": { "type": "string", "maxLength": 200 },
+        "category": { "type": "string", "maxLength": 50 },
+        "subcategory": { "type": "string", "maxLength": 100 },
+        "make": { "type": "string", "maxLength": 100 },
+        "model": { "type": "string", "maxLength": 100 },
+        "year": { "type": "number" },
+        "partNumber": { "type": "string", "maxLength": 100 },
+        "condition": { "type": "string", "maxLength": 50 },
+        "priceZar": { "type": "number" },
+        "province": { "type": "string", "maxLength": 50 },
+        "city": { "type": "string", "maxLength": 100 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "specifications": { "type": "object" },
+        "images": { "type": "array" },
+        "isFeatured": { "type": "boolean" },
+        "views": { "type": "number" },
+        "createdAt": { "type": "string", "maxLength": 100 },
+        "updatedAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["sellerId", "title", "category", "priceZar", "province", "city"]
+    },
+    "OwnerSettings": {
+      "title": "OwnerSettings",
+      "description": "Platform administrator settings and EFT banking details",
+      "type": "object",
+      "properties": {
+        "passwordHash": { "type": "string", "maxLength": 200 },
+        "ownerEmail": { "type": "string", "maxLength": 100 },
+        "ownerPhone": { "type": "string", "maxLength": 50 },
+        "bankingDetails": { "type": "object" }
+      },
+      "required": ["ownerEmail", "bankingDetails"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Admin user record",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "maxLength": 100 },
+        "role": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "/sellers/{sellerId}": {
+      "schema": "Seller",
+      "description": "Collection of registered seller yards"
+    },
+    "/inventory/{itemId}": {
+      "schema": "InventoryItem",
+      "description": "Collection of parts and equipment inventory"
+    },
+    "/owner_settings/{configId}": {
+      "schema": "OwnerSettings",
+      "description": "Platform global configuration and banking details"
+    },
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "Admins collection"
+    }
+  }
+}

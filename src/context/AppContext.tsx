@@ -14,6 +14,18 @@ import {
   INITIAL_SELLERS,
   SUBSCRIPTION_PLANS
 } from '../data/initialData';
+import {
+  testFirebaseConnection,
+  seedInitialFirebaseDataIfEmpty,
+  subscribeSellers,
+  subscribeInventory,
+  subscribeOwnerSettings,
+  saveSellerDoc,
+  deleteSellerDoc,
+  saveInventoryDoc,
+  deleteInventoryDoc,
+  saveOwnerSettingsDoc
+} from '../lib/firebase';
 
 interface AppContextType {
   inventory: InventoryItem[];
@@ -118,7 +130,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Filters state
   const [filter, setFilterState] = useState<FilterState>(initialFilterState);
 
-  // Sync to LocalStorage
+  // Initial Firebase setup & real-time synchronization
+  useEffect(() => {
+    // Test connection & seed initial data if Firestore collections are empty
+    testFirebaseConnection();
+    seedInitialFirebaseDataIfEmpty(INITIAL_INVENTORY, INITIAL_SELLERS, INITIAL_OWNER_SETTINGS);
+
+    // Subscribe to Sellers
+    const unsubscribeSellers = subscribeSellers((remoteSellers) => {
+      if (remoteSellers && remoteSellers.length > 0) {
+        setSellers(remoteSellers);
+      }
+    });
+
+    // Subscribe to Inventory
+    const unsubscribeInventory = subscribeInventory((remoteInventory) => {
+      if (remoteInventory && remoteInventory.length > 0) {
+        setInventory(remoteInventory);
+      }
+    });
+
+    // Subscribe to Owner Settings
+    const unsubscribeOwner = subscribeOwnerSettings((remoteSettings) => {
+      if (remoteSettings) {
+        setOwnerSettings(remoteSettings);
+      }
+    });
+
+    return () => {
+      unsubscribeSellers();
+      unsubscribeInventory();
+      unsubscribeOwner();
+    };
+  }, []);
+
+  // Sync to LocalStorage (as offline backup)
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(inventory));
   }, [inventory]);
@@ -159,20 +205,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateOwnerPassword = (newPass: string) => {
-    setOwnerSettings(prev => ({
-      ...prev,
+    const newSettings = {
+      ...ownerSettings,
       passwordHash: newPass
-    }));
+    };
+    setOwnerSettings(newSettings);
+    saveOwnerSettingsDoc(newSettings);
   };
 
   const updateOwnerBankingDetails = (details: OwnerBankingDetails) => {
-    setOwnerSettings(prev => ({
-      ...prev,
+    const newSettings = {
+      ...ownerSettings,
       bankingDetails: {
         ...details,
         updatedAt: new Date().toISOString()
       }
-    }));
+    };
+    setOwnerSettings(newSettings);
+    saveOwnerSettingsDoc(newSettings);
   };
 
   // Seller operations
@@ -193,51 +243,55 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setSellers(prev => [newSeller, ...prev]);
     setActiveSellerIdState(newId);
+    saveSellerDoc(newSeller);
     return newSeller;
   };
 
   const updateSeller = (updatedSeller: Seller) => {
     setSellers(prev => prev.map(s => (s.id === updatedSeller.id ? updatedSeller : s)));
+    saveSellerDoc(updatedSeller);
   };
 
   const updateSellerStatus = (sellerId: string, status: SubscriptionStatus, dueDate?: string) => {
-    setSellers(prev =>
-      prev.map(s => {
-        if (s.id === sellerId) {
-          const updatedDue = dueDate || s.subscriptionDueDate;
-          return {
-            ...s,
-            subscriptionStatus: status,
-            subscriptionDueDate: updatedDue
-          };
-        }
-        return s;
-      })
-    );
+    const existingSeller = sellers.find(s => s.id === sellerId);
+    if (!existingSeller) return;
+
+    const updatedSeller: Seller = {
+      ...existingSeller,
+      subscriptionStatus: status,
+      subscriptionDueDate: dueDate || existingSeller.subscriptionDueDate
+    };
+
+    setSellers(prev => prev.map(s => (s.id === sellerId ? updatedSeller : s)));
+    saveSellerDoc(updatedSeller);
   };
 
   const submitPaymentProof = (sellerId: string, reference: string) => {
-    setSellers(prev =>
-      prev.map(s => {
-        if (s.id === sellerId) {
-          return {
-            ...s,
-            subscriptionStatus: 'pending_verification',
-            lastPaymentRef: reference,
-            paymentProofSubmittedAt: new Date().toISOString()
-          };
-        }
-        return s;
-      })
-    );
+    const existingSeller = sellers.find(s => s.id === sellerId);
+    if (!existingSeller) return;
+
+    const updatedSeller: Seller = {
+      ...existingSeller,
+      subscriptionStatus: 'pending_verification',
+      lastPaymentRef: reference,
+      paymentProofSubmittedAt: new Date().toISOString()
+    };
+
+    setSellers(prev => prev.map(s => (s.id === sellerId ? updatedSeller : s)));
+    saveSellerDoc(updatedSeller);
   };
 
   // OWNER REMOVE / EDIT UNPAID SUBSCRIPTION
   const removeUnpaidSellerAndListings = (sellerId: string) => {
     // Remove seller
     setSellers(prev => prev.filter(s => s.id !== sellerId));
+    deleteSellerDoc(sellerId);
+
     // Remove all inventory items belonging to this unpaid seller
+    const sellerItems = inventory.filter(item => item.sellerId === sellerId);
     setInventory(prev => prev.filter(item => item.sellerId !== sellerId));
+    sellerItems.forEach(item => deleteInventoryDoc(item.id));
+
     // If active seller was this one, clear active seller session
     if (activeSellerId === sellerId) {
       setActiveSellerIdState(null);
@@ -256,26 +310,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updatedAt: new Date().toISOString()
     };
     setInventory(prev => [newItem, ...prev]);
+    saveInventoryDoc(newItem);
   };
 
   const updateInventoryItem = (updatedItem: InventoryItem) => {
+    const itemWithUpdate = { ...updatedItem, updatedAt: new Date().toISOString() };
     setInventory(prev =>
-      prev.map(item =>
-        item.id === updatedItem.id
-          ? { ...updatedItem, updatedAt: new Date().toISOString() }
-          : item
-      )
+      prev.map(item => (item.id === updatedItem.id ? itemWithUpdate : item))
     );
+    saveInventoryDoc(itemWithUpdate);
   };
 
   const deleteInventoryItem = (itemId: string) => {
     setInventory(prev => prev.filter(item => item.id !== itemId));
+    deleteInventoryDoc(itemId);
   };
 
   const incrementViews = (itemId: string) => {
+    const item = inventory.find(i => i.id === itemId);
+    if (!item) return;
+
+    const updated = { ...item, views: item.views + 1 };
     setInventory(prev =>
-      prev.map(item => (item.id === itemId ? { ...item, views: item.views + 1 } : item))
+      prev.map(i => (i.id === itemId ? updated : i))
     );
+    saveInventoryDoc(updated);
   };
 
   // Filter Operations
@@ -333,3 +392,4 @@ export const useApp = () => {
   }
   return context;
 };
+

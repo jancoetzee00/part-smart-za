@@ -16,7 +16,13 @@ import {
   Send,
   Lock,
   Copy,
-  Info
+  Info,
+  Check,
+  Zap,
+  ArrowRight,
+  ShieldCheck,
+  Star,
+  Layers
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { SUBSCRIPTION_PLANS, PROVINCES_LIST, SUBCATEGORIES } from '../data/initialData';
@@ -43,6 +49,7 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
     activeSeller,
     setActiveSellerId,
     registerSeller,
+    updateSeller,
     ownerSettings,
     submitPaymentProof,
     getSellerListings,
@@ -66,9 +73,10 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
     planId: 'pro' as SubscriptionPlanId
   });
 
-  // Payment proof form
+  // Payment proof & plan update state
   const [eftReference, setEftReference] = useState('');
   const [paymentSuccessNote, setPaymentSuccessNote] = useState('');
+  const [planChangeNote, setPlanChangeNote] = useState('');
 
   // Item Form Modal state (For Adding / Editing Inventory)
   const [isItemFormOpen, setIsItemFormOpen] = useState(false);
@@ -110,6 +118,16 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
     submitPaymentProof(activeSeller.id, eftReference.trim());
     setPaymentSuccessNote('EFT Payment Proof reference submitted! The App Owner will review and activate your monthly subscription shortly.');
     setEftReference('');
+  };
+
+  const handleSelectPlanForActiveSeller = (newPlanId: SubscriptionPlanId) => {
+    if (!activeSeller) return;
+    const targetPlan = SUBSCRIPTION_PLANS.find(p => p.id === newPlanId) || SUBSCRIPTION_PLANS[1];
+    updateSeller({
+      ...activeSeller,
+      planId: newPlanId
+    });
+    setPlanChangeNote(`Subscription updated to "${targetPlan.name}" (R${targetPlan.priceZar}/month)! Please use the App Owner banking details below to complete your EFT payment.`);
   };
 
   const handleOpenAddItem = () => {
@@ -220,6 +238,308 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
     alert(`Copied to clipboard: ${text}`);
   };
 
+  // Helper function to resolve active seller plan object safely
+  const getActivePlan = (planId: string) => {
+    if (planId === 'starter' || planId === 'basic') return SUBSCRIPTION_PLANS.find(p => p.id === 'basic') || SUBSCRIPTION_PLANS[0];
+    if (planId === 'dealer_unlimited' || planId === 'enterprise') return SUBSCRIPTION_PLANS.find(p => p.id === 'enterprise') || SUBSCRIPTION_PLANS[2];
+    return SUBSCRIPTION_PLANS.find(p => p.id === 'pro') || SUBSCRIPTION_PLANS[1];
+  };
+
+  /* Tiered Plans Comparison Table Component */
+  const renderPlansComparisonTable = (
+    selectedPlanId: string,
+    onSelectPlan: (planId: SubscriptionPlanId) => void
+  ) => {
+    const plans = [
+      {
+        id: 'basic' as SubscriptionPlanId,
+        name: 'Basic',
+        badge: 'Essential',
+        price: 450,
+        description: 'Ideal for small auto scrap yards, specialized dismantlers & local spares shops.',
+        maxListings: '10 Active Listings',
+        target: 'Local Breakers & Spares Shops',
+        ranking: 'Standard Search Directory Placement',
+        leads: 'Direct WhatsApp & Phone Calls',
+        reach: 'City-Level Buyer Search',
+        analytics: 'Basic View Counter',
+        bulkUpload: 'Manual Entry',
+        support: 'Community Email Support',
+        popular: false
+      },
+      {
+        id: 'pro' as SubscriptionPlanId,
+        name: 'Pro',
+        badge: 'Most Popular',
+        price: 850,
+        description: 'High-visibility advertising for commercial truck breakers & equipment suppliers.',
+        maxListings: '50 Active Listings',
+        target: 'Truck Breakers & Auto Scrap Yards',
+        ranking: 'Featured Yard Badge + Priority Search Placement',
+        leads: 'Direct WhatsApp & Phone Routing',
+        reach: 'Province & City Highlighted',
+        analytics: 'Detailed Buyer Inquiry Analytics',
+        bulkUpload: 'Manual Entry',
+        support: 'Priority Email & WhatsApp Support',
+        popular: true
+      },
+      {
+        id: 'enterprise' as SubscriptionPlanId,
+        name: 'Enterprise',
+        badge: 'Maximum Reach',
+        price: 1850,
+        description: 'Maximum exposure & unlimited listings for major heavy equipment dealers & fleet yards.',
+        maxListings: 'Unlimited Listings',
+        target: 'Heavy Equipment Dealers & Fleet Yards',
+        ranking: 'Top Homepage Banner + Verified Dealer Badge',
+        leads: 'WhatsApp, Phone & Direct Email Leads',
+        reach: 'Nationwide Premium Exposure',
+        analytics: 'Real-Time Performance Dashboard',
+        bulkUpload: 'Bulk CSV Inventory Upload Assistant',
+        support: 'Dedicated Account Manager',
+        popular: false
+      }
+    ];
+
+    const isCurrentPlan = (pId: string) => {
+      if (selectedPlanId === pId) return true;
+      if (selectedPlanId === 'starter' && pId === 'basic') return true;
+      if (selectedPlanId === 'dealer_unlimited' && pId === 'enterprise') return true;
+      return false;
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="text-center space-y-1.5 max-w-2xl mx-auto">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[11px] font-bold uppercase tracking-wider">
+            <Zap className="w-3.5 h-3.5" /> Tiered Advertising Subscriptions
+          </div>
+          <h3 className="text-xl font-black text-white">Compare Monthly Seller Subscription Plans</h3>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Select the advertising plan tailored for your yard's inventory size to start receiving direct WhatsApp & phone leads across South Africa.
+          </p>
+        </div>
+
+        {/* Desktop Tiered Comparison Table */}
+        <div className="hidden md:block overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-slate-800 bg-slate-900/90">
+                <th className="p-4 w-1/4 font-extrabold text-slate-400 uppercase text-[11px] tracking-wider">
+                  Tier Comparison
+                </th>
+                {plans.map((p) => {
+                  const selected = isCurrentPlan(p.id);
+                  return (
+                    <th
+                      key={p.id}
+                      className={`p-4 w-1/4 align-top transition-all ${
+                        p.popular ? 'bg-amber-500/10' : ''
+                      } ${selected ? 'bg-amber-500/15 border-t-2 border-amber-500' : ''}`}
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="font-black text-base text-white uppercase tracking-wide">{p.name}</span>
+                          {p.popular ? (
+                            <span className="bg-amber-500 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">
+                              Most Popular
+                            </span>
+                          ) : (
+                            <span className="bg-slate-800 text-slate-300 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase">
+                              {p.badge}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="text-2xl font-black text-white flex items-baseline gap-1">
+                          R{p.price}
+                          <span className="text-[10px] text-slate-400 font-normal">/month</span>
+                        </div>
+
+                        <p className="text-[11px] text-slate-400 font-normal leading-snug min-h-[36px]">
+                          {p.description}
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={() => onSelectPlan(p.id)}
+                          className={`w-full py-2 px-3 rounded-xl font-extrabold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                            selected
+                              ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
+                              : p.popular
+                              ? 'bg-amber-500/20 hover:bg-amber-500 hover:text-slate-950 text-amber-300 border border-amber-500/30'
+                              : 'bg-slate-800 hover:bg-slate-700 text-white'
+                          }`}
+                        >
+                          {selected ? (
+                            <>
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Selected Plan</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>Choose {p.name}</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/70 text-xs">
+              <tr>
+                <td className="p-3.5 font-bold text-slate-300 bg-slate-900/40 border-r border-slate-800/60">
+                  Active Listings Limit
+                </td>
+                {plans.map((p) => (
+                  <td key={p.id} className={`p-3.5 font-black text-amber-400 ${p.popular ? 'bg-amber-500/5' : ''}`}>
+                    {p.maxListings}
+                  </td>
+                ))}
+              </tr>
+              <tr>
+                <td className="p-3.5 font-bold text-slate-300 bg-slate-900/40 border-r border-slate-800/60">
+                  Target Business Type
+                </td>
+                {plans.map((p) => (
+                  <td key={p.id} className={`p-3.5 text-slate-200 ${p.popular ? 'bg-amber-500/5' : ''}`}>
+                    {p.target}
+                  </td>
+                ))}
+              </tr>
+              <tr>
+                <td className="p-3.5 font-bold text-slate-300 bg-slate-900/40 border-r border-slate-800/60">
+                  Directory Search Ranking
+                </td>
+                {plans.map((p) => (
+                  <td key={p.id} className={`p-3.5 font-medium ${p.id === 'basic' ? 'text-slate-300' : 'text-amber-300'} ${p.popular ? 'bg-amber-500/5' : ''}`}>
+                    {p.ranking}
+                  </td>
+                ))}
+              </tr>
+              <tr>
+                <td className="p-3.5 font-bold text-slate-300 bg-slate-900/40 border-r border-slate-800/60">
+                  Buyer Lead Routing
+                </td>
+                {plans.map((p) => (
+                  <td key={p.id} className={`p-3.5 text-slate-200 ${p.popular ? 'bg-amber-500/5' : ''}`}>
+                    {p.leads}
+                  </td>
+                ))}
+              </tr>
+              <tr>
+                <td className="p-3.5 font-bold text-slate-300 bg-slate-900/40 border-r border-slate-800/60">
+                  Geographic Reach
+                </td>
+                {plans.map((p) => (
+                  <td key={p.id} className={`p-3.5 text-slate-200 ${p.popular ? 'bg-amber-500/5' : ''}`}>
+                    {p.reach}
+                  </td>
+                ))}
+              </tr>
+              <tr>
+                <td className="p-3.5 font-bold text-slate-300 bg-slate-900/40 border-r border-slate-800/60">
+                  Analytics & View Stats
+                </td>
+                {plans.map((p) => (
+                  <td key={p.id} className={`p-3.5 text-slate-200 ${p.popular ? 'bg-amber-500/5' : ''}`}>
+                    {p.analytics}
+                  </td>
+                ))}
+              </tr>
+              <tr>
+                <td className="p-3.5 font-bold text-slate-300 bg-slate-900/40 border-r border-slate-800/60">
+                  Bulk CSV Upload Tool
+                </td>
+                {plans.map((p) => (
+                  <td key={p.id} className={`p-3.5 ${p.id === 'enterprise' ? 'font-bold text-emerald-400' : 'text-slate-400'} ${p.popular ? 'bg-amber-500/5' : ''}`}>
+                    {p.bulkUpload}
+                  </td>
+                ))}
+              </tr>
+              <tr>
+                <td className="p-3.5 font-bold text-slate-300 bg-slate-900/40 border-r border-slate-800/60">
+                  Support Level
+                </td>
+                {plans.map((p) => (
+                  <td key={p.id} className={`p-3.5 ${p.id === 'enterprise' ? 'font-bold text-indigo-300' : 'text-slate-200'} ${p.popular ? 'bg-amber-500/5' : ''}`}>
+                    {p.support}
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile Plan Cards */}
+        <div className="grid grid-cols-1 gap-4 md:hidden">
+          {plans.map((p) => {
+            const selected = isCurrentPlan(p.id);
+            return (
+              <div
+                key={p.id}
+                className={`p-5 rounded-2xl border transition-all space-y-3 ${
+                  selected
+                    ? 'bg-amber-500/10 border-amber-500'
+                    : p.popular
+                    ? 'bg-slate-900 border-amber-500/40'
+                    : 'bg-slate-950 border-slate-800'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-extrabold text-base text-white">{p.name}</h4>
+                    <span className="text-xs text-amber-400 font-bold">{p.maxListings}</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-black text-white">R{p.price}</div>
+                    <span className="text-[10px] text-slate-400">per month</span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-400 leading-normal">{p.description}</p>
+
+                <ul className="space-y-1.5 text-xs text-slate-300 pt-2 border-t border-slate-800">
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span><strong>Listings:</strong> {p.maxListings}</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span><strong>Ranking:</strong> {p.ranking}</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span><strong>Leads:</strong> {p.leads}</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span><strong>Support:</strong> {p.support}</span>
+                  </li>
+                </ul>
+
+                <button
+                  type="button"
+                  onClick={() => onSelectPlan(p.id)}
+                  className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                    selected
+                      ? 'bg-amber-500 text-slate-950'
+                      : 'bg-slate-800 hover:bg-slate-700 text-white'
+                  }`}
+                >
+                  {selected ? 'Selected Plan' : `Select ${p.name}`}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl text-white my-auto flex flex-col">
@@ -269,7 +589,7 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
               }`}
             >
               <CreditCard className="w-3.5 h-3.5" />
-              Subscription & Owner Banking
+              Plans & Owner Banking
             </button>
 
             <button
@@ -286,7 +606,7 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
 
           <button
             onClick={() => setActiveTab('register')}
-            className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1"
+            className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1 cursor-pointer"
           >
             <PlusCircle className="w-3.5 h-3.5" /> Register New Yard
           </button>
@@ -328,11 +648,11 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
                       <div className="flex items-center gap-2">
                         <h3 className="text-lg font-black text-white">{activeSeller.companyName}</h3>
                         {activeSeller.subscriptionStatus === 'active' ? (
-                          <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1">
+                          <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-1">
                             <CheckCircle2 className="w-3 h-3" /> Active Subscription
                           </span>
                         ) : (
-                          <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1">
+                          <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-1">
                             <AlertTriangle className="w-3 h-3" /> {activeSeller.subscriptionStatus.toUpperCase()}
                           </span>
                         )}
@@ -410,7 +730,7 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
                         </p>
                         <button
                           onClick={handleOpenAddItem}
-                          className="px-4 py-2 bg-amber-500 text-slate-950 text-xs font-bold rounded-xl"
+                          className="px-4 py-2 bg-amber-500 text-slate-950 text-xs font-bold rounded-xl cursor-pointer"
                         >
                           Add Your First Part
                         </button>
@@ -422,11 +742,39 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
             </div>
           )}
 
-          {/* TAB 2: SUBSCRIPTION & OWNER BANKING DETAILS */}
+          {/* TAB 2: PLANS & OWNER BANKING DETAILS */}
           {activeTab === 'subscription' && (
-            <div className="space-y-6">
+            <div className="space-y-8">
+              
+              {/* TIERED PLANS COMPARISON TABLE */}
+              <div className="bg-slate-950/80 p-6 rounded-3xl border border-slate-800">
+                {renderPlansComparisonTable(
+                  activeSeller ? activeSeller.planId : regForm.planId,
+                  (pId) => {
+                    if (activeSeller) {
+                      handleSelectPlanForActiveSeller(pId);
+                    } else {
+                      setRegForm(prev => ({ ...prev, planId: pId }));
+                      setActiveTab('register');
+                    }
+                  }
+                )}
+              </div>
+
               {!activeSeller ? (
-                <p className="text-xs text-amber-400">Please select a seller account first.</p>
+                <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 text-center space-y-3">
+                  <Info className="w-8 h-8 text-amber-400 mx-auto" />
+                  <h4 className="text-sm font-bold">Select or Register a Seller Account</h4>
+                  <p className="text-xs text-slate-400 max-w-md mx-auto">
+                    To make EFT payments or manage your subscription, please register your yard or switch to an existing seller profile.
+                  </p>
+                  <button
+                    onClick={() => setActiveTab('register')}
+                    className="px-4 py-2 bg-amber-500 text-slate-950 text-xs font-bold rounded-xl cursor-pointer"
+                  >
+                    Register New Yard Now
+                  </button>
+                </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                   
@@ -450,10 +798,20 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
                         )}
                       </div>
 
+                      {planChangeNote && (
+                        <div className="bg-amber-500/10 border border-amber-500/30 text-amber-300 p-3 rounded-xl text-xs space-y-1">
+                          <span className="font-bold block flex items-center gap-1">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Plan Change Saved!
+                          </span>
+                          <p className="text-[11px] leading-relaxed">{planChangeNote}</p>
+                        </div>
+                      )}
+
                       <div className="space-y-1">
                         <h4 className="text-base font-bold text-white">{activeSeller.companyName}</h4>
-                        <div className="text-xs text-amber-400 font-semibold">
-                          Plan: {SUBSCRIPTION_PLANS.find(p => p.id === activeSeller.planId)?.name} (R{SUBSCRIPTION_PLANS.find(p => p.id === activeSeller.planId)?.priceZar}/mo)
+                        <div className="text-xs text-amber-400 font-extrabold flex items-center gap-1.5">
+                          <span>Active Tier: {getActivePlan(activeSeller.planId).name} Plan</span>
+                          <span>(R{getActivePlan(activeSeller.planId).priceZar}/mo)</span>
                         </div>
                         <div className="text-[11px] text-slate-400">
                           Due Date: {new Date(activeSeller.subscriptionDueDate).toLocaleDateString('en-ZA')}
@@ -617,7 +975,9 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
                       <div>
                         <h4 className="font-bold text-sm text-white">{s.companyName}</h4>
                         <p className="text-xs text-slate-400">{s.city}, {s.province}</p>
-                        <p className="text-[11px] text-slate-500 mt-1">Contact: {s.contactName} ({s.phone})</p>
+                        <p className="text-[11px] text-slate-500 mt-1">
+                          Contact: {s.contactName} ({s.phone}) | Plan: <span className="text-amber-400 font-bold uppercase">{getActivePlan(s.planId).name}</span>
+                        </p>
                       </div>
 
                       <span
@@ -638,128 +998,113 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
 
           {/* TAB 4: REGISTER NEW SELLER */}
           {activeTab === 'register' && (
-            <form onSubmit={handleRegisterSubmit} className="space-y-6 max-w-2xl mx-auto bg-slate-950 p-6 rounded-2xl border border-slate-800">
-              <h3 className="text-base font-bold text-amber-400 border-b border-slate-800 pb-2">
-                Register Equipment Yard / Breaker Account
-              </h3>
+            <div className="space-y-8">
+              <form onSubmit={handleRegisterSubmit} className="space-y-6 max-w-3xl mx-auto bg-slate-950 p-6 rounded-2xl border border-slate-800">
+                <h3 className="text-base font-bold text-amber-400 border-b border-slate-800 pb-2">
+                  Register Equipment Yard / Breaker Account
+                </h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                <div className="space-y-1">
-                  <label className="text-slate-300 font-medium">Company / Yard Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={regForm.companyName}
-                    onChange={(e) => setRegForm({ ...regForm, companyName: e.target.value })}
-                    placeholder="e.g. Witbank Truck Breakers"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white"
-                  />
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-medium">Company / Yard Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={regForm.companyName}
+                      onChange={(e) => setRegForm({ ...regForm, companyName: e.target.value })}
+                      placeholder="e.g. Witbank Truck Breakers"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                    />
+                  </div>
 
-                <div className="space-y-1">
-                  <label className="text-slate-300 font-medium">Contact Person *</label>
-                  <input
-                    type="text"
-                    required
-                    value={regForm.contactName}
-                    onChange={(e) => setRegForm({ ...regForm, contactName: e.target.value })}
-                    placeholder="e.g. Piet Botha"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white"
-                  />
-                </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-medium">Contact Person *</label>
+                    <input
+                      type="text"
+                      required
+                      value={regForm.contactName}
+                      onChange={(e) => setRegForm({ ...regForm, contactName: e.target.value })}
+                      placeholder="e.g. Piet Botha"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                    />
+                  </div>
 
-                <div className="space-y-1">
-                  <label className="text-slate-300 font-medium">Phone Number *</label>
-                  <input
-                    type="text"
-                    required
-                    value={regForm.phone}
-                    onChange={(e) => setRegForm({ ...regForm, phone: e.target.value, whatsapp: regForm.whatsapp || e.target.value })}
-                    placeholder="e.g. +27 82 123 4567"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white"
-                  />
-                </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-medium">Phone Number *</label>
+                    <input
+                      type="text"
+                      required
+                      value={regForm.phone}
+                      onChange={(e) => setRegForm({ ...regForm, phone: e.target.value, whatsapp: regForm.whatsapp || e.target.value })}
+                      placeholder="e.g. +27 82 123 4567"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                    />
+                  </div>
 
-                <div className="space-y-1">
-                  <label className="text-slate-300 font-medium">WhatsApp Number *</label>
-                  <input
-                    type="text"
-                    required
-                    value={regForm.whatsapp}
-                    onChange={(e) => setRegForm({ ...regForm, whatsapp: e.target.value })}
-                    placeholder="e.g. 27821234567"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white"
-                  />
-                </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-medium">WhatsApp Number *</label>
+                    <input
+                      type="text"
+                      required
+                      value={regForm.whatsapp}
+                      onChange={(e) => setRegForm({ ...regForm, whatsapp: e.target.value })}
+                      placeholder="e.g. 27821234567"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                    />
+                  </div>
 
-                <div className="space-y-1">
-                  <label className="text-slate-300 font-medium">Email Address *</label>
-                  <input
-                    type="email"
-                    required
-                    value={regForm.email}
-                    onChange={(e) => setRegForm({ ...regForm, email: e.target.value })}
-                    placeholder="e.g. sales@witbankbreakers.co.za"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white"
-                  />
-                </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-medium">Email Address *</label>
+                    <input
+                      type="email"
+                      required
+                      value={regForm.email}
+                      onChange={(e) => setRegForm({ ...regForm, email: e.target.value })}
+                      placeholder="e.g. sales@witbankbreakers.co.za"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                    />
+                  </div>
 
-                <div className="space-y-1">
-                  <label className="text-slate-300 font-medium">Province *</label>
-                  <select
-                    value={regForm.province}
-                    onChange={(e) => setRegForm({ ...regForm, province: e.target.value as SAProvince })}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white"
-                  >
-                    {PROVINCES_LIST.map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
-                </div>
-
-                <div className="space-y-1 md:col-span-2">
-                  <label className="text-slate-300 font-medium">City & Street Address</label>
-                  <input
-                    type="text"
-                    value={regForm.address}
-                    onChange={(e) => setRegForm({ ...regForm, address: e.target.value })}
-                    placeholder="e.g. 14 Industrial Park, eMalahleni"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white"
-                  />
-                </div>
-              </div>
-
-              {/* Choose Subscription Plan */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-amber-400">Select Monthly Subscription Plan</label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {SUBSCRIPTION_PLANS.map((plan) => (
-                    <div
-                      key={plan.id}
-                      onClick={() => setRegForm({ ...regForm, planId: plan.id })}
-                      className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
-                        regForm.planId === plan.id
-                          ? 'bg-amber-500/20 border-amber-500'
-                          : 'bg-slate-900 border-slate-800'
-                      }`}
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-medium">Province *</label>
+                    <select
+                      value={regForm.province}
+                      onChange={(e) => setRegForm({ ...regForm, province: e.target.value as SAProvince })}
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white cursor-pointer"
                     >
-                      <div className="font-bold text-xs text-white">{plan.name}</div>
-                      <div className="text-base font-black text-amber-400 mt-1">
-                        R{plan.priceZar}<span className="text-[10px] text-slate-400">/month</span>
-                      </div>
-                      <div className="text-[10px] text-slate-400 mt-1">
-                        Up to {plan.maxListings} active listings
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                      {PROVINCES_LIST.map(p => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                  </div>
 
-              <button
-                type="submit"
-                className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-lg cursor-pointer"
-              >
-                Complete Registration & View Banking Details
-              </button>
-            </form>
+                  <div className="space-y-1 md:col-span-2">
+                    <label className="text-slate-300 font-medium">City & Street Address</label>
+                    <input
+                      type="text"
+                      value={regForm.address}
+                      onChange={(e) => setRegForm({ ...regForm, address: e.target.value })}
+                      placeholder="e.g. 14 Industrial Park, eMalahleni"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Choose Subscription Plan Tiered Table */}
+                <div className="space-y-3 pt-2">
+                  <label className="text-xs font-bold text-amber-400 block border-b border-slate-800 pb-2">
+                    Selected Subscription Plan: <span className="text-white uppercase font-black">{getActivePlan(regForm.planId).name} (R{getActivePlan(regForm.planId).priceZar}/mo)</span>
+                  </label>
+
+                  {renderPlansComparisonTable(regForm.planId, (pId) => setRegForm({ ...regForm, planId: pId }))}
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all cursor-pointer"
+                >
+                  Complete Registration & View Banking Details
+                </button>
+              </form>
+            </div>
           )}
 
         </div>
@@ -896,13 +1241,13 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsItemFormOpen(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl"
+                  className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-amber-500 text-slate-950 font-bold rounded-xl"
+                  className="px-5 py-2 bg-amber-500 text-slate-950 font-bold rounded-xl cursor-pointer"
                 >
                   Save Item
                 </button>
