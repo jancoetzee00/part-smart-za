@@ -1,0 +1,200 @@
+import React, { useState } from 'react';
+import { AppProvider, useApp } from './context/AppContext';
+import { Header } from './components/Header';
+import { HeroBanner } from './components/HeroBanner';
+import { InventoryFilter } from './components/InventoryFilter';
+import { InventoryGrid } from './components/InventoryGrid';
+import { SellerPortalModal } from './components/SellerPortalModal';
+import { OwnerAdminModal } from './components/OwnerAdminModal';
+import { AiPartAssistantModal } from './components/AiPartAssistantModal';
+import { SellersDirectoryModal } from './components/SellersDirectoryModal';
+import {
+  HardHat,
+  Truck,
+  Car,
+  Lock,
+  Building2,
+  ShieldCheck,
+  Phone,
+  Mail,
+  MapPin,
+  CreditCard,
+  CheckCircle2,
+  Heart
+} from 'lucide-react';
+
+const MainContent: React.FC = () => {
+  const [isSellerPortalOpen, setIsSellerPortalOpen] = useState(false);
+  const [isOwnerAdminOpen, setIsOwnerAdminOpen] = useState(false);
+  const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
+  const [isSellersDirectoryOpen, setIsSellersDirectoryOpen] = useState(false);
+
+  const { ownerSettings, inventory, sellers } = useApp();
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col selection:bg-amber-500 selection:text-slate-950">
+      
+      {/* Header */}
+      <Header
+        onOpenSellerPortal={() => setIsSellerPortalOpen(true)}
+        onOpenOwnerAdmin={() => setIsOwnerAdminOpen(true)}
+        onOpenAiAssistant={() => setIsAiAssistantOpen(true)}
+        onOpenSellersDirectory={() => setIsSellersDirectoryOpen(true)}
+      />
+
+      {/* Hero Banner */}
+      <HeroBanner
+        onOpenSellerPortal={() => setIsSellerPortalOpen(true)}
+        onOpenOwnerAdmin={() => setIsOwnerAdminOpen(true)}
+        onOpenSellersDirectory={() => setIsSellersDirectoryOpen(true)}
+      />
+
+      {/* Filter Toolbar */}
+      <InventoryFilter />
+
+      {/* Main Inventory Directory Grid */}
+      <main className="flex-1">
+        <InventoryGrid
+          onOpenSellerPortal={() => setIsSellerPortalOpen(true)}
+        />
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-slate-900 border-t border-slate-800 text-slate-400 py-12 px-4 mt-12 text-xs">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+          
+          {/* Col 1: Brand Info */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-slate-950 font-black">
+                <HardHat className="w-5 h-5" />
+              </div>
+              <span className="font-black text-white text-base tracking-tight">
+                PART-SMART<span className="text-amber-500">.ZA</span>
+              </span>
+            </div>
+            <p className="text-slate-400 text-xs leading-relaxed">
+              South Africa's dedicated advertising network for Car, Truck, and Heavy Equipment inventory. Connecting buyers with verified yards nationwide.
+            </p>
+            <div className="flex items-center gap-2 text-slate-300">
+              <MapPin className="w-3.5 h-3.5 text-amber-400" />
+              <span>Johannesburg • Cape Town • Durban • Polokwane</span>
+            </div>
+          </div>
+
+          {/* Col 2: Categories */}
+          <div className="space-y-2">
+            <h4 className="font-bold text-white uppercase text-[11px] tracking-wider text-amber-400">
+              Marketplace Categories
+            </h4>
+            <ul className="space-y-1.5 text-slate-300">
+              <li className="flex items-center gap-1.5"><HardHat className="w-3 h-3 text-amber-400" /> Earthmoving & Heavy Equipment</li>
+              <li className="flex items-center gap-1.5"><Truck className="w-3 h-3 text-amber-400" /> Commercial Trucks & Trailer Parts</li>
+              <li className="flex items-center gap-1.5"><Car className="w-3 h-3 text-amber-400" /> Passenger Cars, SUVs & Bakkies</li>
+              <li>Reconditioned Hydraulics & Pumps</li>
+              <li>Stripping Vehicles for Spares</li>
+            </ul>
+          </div>
+
+          {/* Col 3: Seller Subscriptions */}
+          <div className="space-y-2">
+            <h4 className="font-bold text-white uppercase text-[11px] tracking-wider text-amber-400">
+              Seller Advertising Subscriptions
+            </h4>
+            <p className="text-slate-300 leading-relaxed">
+              Automotive scrap yards, truck breakers, and heavy equipment dealers can subscribe monthly to advertise inventory.
+            </p>
+            <button
+              onClick={() => setIsSellerPortalOpen(true)}
+              className="mt-1 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 font-bold rounded-lg transition-colors cursor-pointer"
+            >
+              Seller Portal & Subscription Plans
+            </button>
+          </div>
+
+          {/* Col 4: Owner Banking Summary */}
+          <div className="space-y-2 bg-slate-950 p-4 rounded-2xl border border-slate-800">
+            <div className="flex items-center justify-between">
+              <h4 className="font-bold text-white text-xs flex items-center gap-1.5">
+                <CreditCard className="w-3.5 h-3.5 text-amber-400" /> App Owner EFT Banking
+              </h4>
+              <button
+                onClick={() => setIsOwnerAdminOpen(true)}
+                className="text-amber-400 hover:text-amber-300 p-1 cursor-pointer"
+                title="Edit Owner Banking Details (Password Protected)"
+              >
+                <Lock className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="text-[11px] text-slate-300 space-y-1">
+              <div>Bank: <strong>{ownerSettings.bankingDetails.bankName}</strong></div>
+              <div>Account: <strong className="font-mono text-amber-400">{ownerSettings.bankingDetails.accountNumber}</strong></div>
+              <div>Branch Code: <strong className="font-mono text-slate-200">{ownerSettings.bankingDetails.branchCode}</strong></div>
+            </div>
+            <p className="text-[10px] text-slate-500 pt-1 border-t border-slate-800">
+              Password-protected admin console available for App Owner.
+            </p>
+          </div>
+
+        </div>
+
+        <div className="max-w-7xl mx-auto pt-8 mt-8 border-t border-slate-800/80 flex flex-wrap justify-between items-center gap-4 text-[11px] text-slate-500">
+          <div>
+            © {new Date().getFullYear()} Part-Smart-ZA. All rights reserved. South Africa's Heavy Duty Ad Network.
+          </div>
+          <div className="flex items-center gap-4">
+            <button onClick={() => setIsOwnerAdminOpen(true)} className="hover:text-amber-400 transition-colors">
+              Owner Admin Login
+            </button>
+            <span>•</span>
+            <button onClick={() => setIsSellerPortalOpen(true)} className="hover:text-amber-400 transition-colors">
+              Seller Portal
+            </button>
+          </div>
+        </div>
+      </footer>
+
+      {/* Modals */}
+      {isSellerPortalOpen && (
+        <SellerPortalModal
+          onClose={() => setIsSellerPortalOpen(false)}
+          onOpenOwnerAdmin={() => {
+            setIsSellerPortalOpen(false);
+            setIsOwnerAdminOpen(true);
+          }}
+        />
+      )}
+
+      {isOwnerAdminOpen && (
+        <OwnerAdminModal
+          onClose={() => setIsOwnerAdminOpen(false)}
+        />
+      )}
+
+      {isAiAssistantOpen && (
+        <AiPartAssistantModal
+          onClose={() => setIsAiAssistantOpen(false)}
+        />
+      )}
+
+      {isSellersDirectoryOpen && (
+        <SellersDirectoryModal
+          onClose={() => setIsSellersDirectoryOpen(false)}
+          onOpenSellerPortal={() => {
+            setIsSellersDirectoryOpen(false);
+            setIsSellerPortalOpen(true);
+          }}
+        />
+      )}
+
+    </div>
+  );
+};
+
+export default function App() {
+  return (
+    <AppProvider>
+      <MainContent />
+    </AppProvider>
+  );
+}
