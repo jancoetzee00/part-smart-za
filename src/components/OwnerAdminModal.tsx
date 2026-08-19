@@ -22,6 +22,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { OwnerBankingDetails, Seller, SubscriptionStatus, SubscriptionPlanId } from '../types';
 import { SUBSCRIPTION_PLANS } from '../data/initialData';
+import { isLocalAppEnvironment } from '../lib/env';
 
 interface OwnerAdminModalProps {
   onClose: () => void;
@@ -173,6 +174,15 @@ export const OwnerAdminModal: React.FC<OwnerAdminModalProps> = ({ onClose }) => 
             <div>
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <span>Part-Smart-ZA App Owner Console</span>
+                {isLocalAppEnvironment() ? (
+                  <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] px-2 py-0.5 rounded-full font-bold">
+                    Local App Mode
+                  </span>
+                ) : (
+                  <span className="bg-blue-500/20 text-blue-300 border border-blue-500/30 text-[10px] px-2 py-0.5 rounded-full font-bold">
+                    Public App (Secured)
+                  </span>
+                )}
                 {isOwnerAdminLoggedIn && (
                   <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] px-2 py-0.5 rounded-full font-bold">
                     Authenticated

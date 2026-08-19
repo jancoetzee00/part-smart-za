@@ -15,6 +15,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { InventoryItem, Seller } from '../types';
+import { generateWhatsappInquiryUrl } from '../lib/whatsapp';
 
 interface SellerContactModalProps {
   item: InventoryItem;
@@ -81,11 +82,8 @@ export const SellerContactModal: React.FC<SellerContactModalProps> = ({
   };
 
   const handleWhatsapp = () => {
-    const cleanPhone = sellerWhatsapp.replace(/\+/g, '');
-    const text = encodeURIComponent(
-      `Hello ${contactName} (${companyName}), I found your item "${item.title}" (${formatCurrency(item.priceZar)}) on Part-Smart-ZA. Is this still in stock?`
-    );
-    window.open(`https://wa.me/${cleanPhone}?text=${text}`, '_blank');
+    const waUrl = generateWhatsappInquiryUrl(item, seller);
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (

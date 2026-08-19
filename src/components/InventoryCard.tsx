@@ -7,15 +7,15 @@ import {
   Truck,
   Car,
   MessageSquare,
-  ChevronRight,
   Sparkles,
   AlertCircle,
-  PhoneCall,
-  Mail
+  PhoneCall
 } from 'lucide-react';
 import { InventoryItem } from '../types';
 import { useApp } from '../context/AppContext';
+import { CATEGORY_VISUALS } from '../data/categoryImages';
 import { SellerContactModal } from './SellerContactModal';
+import { generateWhatsappInquiryUrl } from '../lib/whatsapp';
 
 interface InventoryCardProps {
   item: InventoryItem;
@@ -54,25 +54,25 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({ item, onSelect }) 
     switch (cond) {
       case 'new':
         return (
-          <span className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-bold">
+          <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-bold">
             NEW
           </span>
         );
       case 'reconditioned':
         return (
-          <span className="bg-amber-500/10 text-amber-600 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-bold">
+          <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-bold">
             RECONDITIONED
           </span>
         );
       case 'used':
         return (
-          <span className="bg-blue-500/10 text-blue-600 border border-blue-500/30 px-2 py-0.5 rounded text-[10px] font-bold">
+          <span className="bg-blue-500/10 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded text-[10px] font-bold">
             USED
           </span>
         );
       case 'stripping_spares':
         return (
-          <span className="bg-purple-500/10 text-purple-600 border border-purple-500/30 px-2 py-0.5 rounded text-[10px] font-bold">
+          <span className="bg-purple-500/10 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded text-[10px] font-bold">
             STRIPPING FOR SPARES
           </span>
         );
@@ -93,11 +93,9 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({ item, onSelect }) 
 
   const handleWhatsappClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const cleanPhone = item.sellerWhatsapp.replace(/\+/g, '');
-    const text = encodeURIComponent(
-      `Hello ${item.sellerName}, I found your listing "${item.title}" (${formatCurrency(item.priceZar)}) on Part-Smart-ZA. Is this still available?`
-    );
-    window.open(`https://wa.me/${cleanPhone}?text=${text}`, '_blank');
+    incrementViews(item.id);
+    const waUrl = generateWhatsappInquiryUrl(item, seller);
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -108,19 +106,18 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({ item, onSelect }) 
       >
         {/* Photo Container */}
         <div className="relative aspect-[4/3] bg-slate-950 overflow-hidden">
-          {item.images && item.images.length > 0 ? (
-            <img
-              src={item.images[0]}
-              alt={item.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-slate-600 gap-2">
-              <HardHat className="w-10 h-10 opacity-40" />
-              <span className="text-xs">No Photo Available</span>
-            </div>
-          )}
+          <img
+            src={item.images && item.images.length > 0 && item.images[0] ? item.images[0] : (CATEGORY_VISUALS[item.category]?.image || CATEGORY_VISUALS.heavy_equipment.image)}
+            alt={item.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              const fallback = CATEGORY_VISUALS[item.category]?.image || CATEGORY_VISUALS.heavy_equipment.image;
+              if (e.currentTarget.src !== fallback) {
+                e.currentTarget.src = fallback;
+              }
+            }}
+          />
 
           {/* Featured Badge */}
           {item.isFeatured && (
@@ -140,15 +137,15 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({ item, onSelect }) 
             {formatCurrency(item.priceZar)}
           </div>
 
-          {/* Floating Action Button (FAB) for Quick Contact */}
+          {/* Floating WhatsApp Quick Action on image */}
           <button
             type="button"
-            onClick={handleOpenContactModal}
-            className="absolute bottom-2.5 right-2.5 z-20 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-[11px] px-3 py-1.5 rounded-full shadow-xl shadow-amber-500/30 border border-amber-300/80 flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 cursor-pointer"
-            title="Contact Seller (Phone & Email)"
+            onClick={handleWhatsappClick}
+            className="absolute bottom-2.5 right-2.5 z-20 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] px-3 py-1.5 rounded-full shadow-xl shadow-emerald-950/50 border border-emerald-400/40 flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            title="Chat directly on WhatsApp"
           >
-            <PhoneCall className="w-3.5 h-3.5" />
-            <span>Contact</span>
+            <MessageSquare className="w-3.5 h-3.5 fill-white text-emerald-600" />
+            <span>WhatsApp</span>
           </button>
         </div>
 
@@ -180,50 +177,53 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({ item, onSelect }) 
           </div>
 
           {/* Location & Seller Footer */}
-          <div className="pt-2 border-t border-slate-800/80 space-y-2">
+          <div className="pt-2 border-t border-slate-800/80 space-y-2.5">
             <div className="flex items-center justify-between text-xs text-slate-400">
-              <div className="flex items-center gap-1 text-slate-300">
+              <div className="flex items-center gap-1 text-slate-300 min-w-0">
                 <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                 <span className="truncate">{item.city}, {item.province}</span>
               </div>
-              <div className="flex items-center gap-1 text-[11px] text-slate-500">
+              <div className="flex items-center gap-1 text-[11px] text-slate-500 shrink-0">
                 <Eye className="w-3 h-3" />
                 <span>{item.views}</span>
               </div>
             </div>
 
-            {/* Seller Badge & WhatsApp action */}
-            <div className="flex items-center justify-between gap-2 pt-1">
+            {/* Seller Name and Verification */}
+            <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-1.5 min-w-0">
                 {isSellerActive ? (
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 ) : (
                   <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                 )}
-                <span className="text-xs font-semibold text-slate-300 truncate">
+                <span className="font-semibold text-slate-300 truncate">
                   {item.sellerName}
                 </span>
               </div>
+            </div>
 
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={handleOpenContactModal}
-                  className="px-2 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold text-[11px] rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
-                  title="View Seller Phone & Email"
-                >
-                  <PhoneCall className="w-3 h-3" />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleWhatsappClick}
-                  className="px-2.5 py-1 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 font-bold text-[11px] rounded-lg transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
-                  title="Chat on WhatsApp"
-                >
-                  <MessageSquare className="w-3 h-3" />
-                  <span>WhatsApp</span>
-                </button>
-              </div>
+            {/* Action Buttons: WhatsApp Inquiry (Primary) + Phone/Details (Secondary) */}
+            <div className="grid grid-cols-12 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleWhatsappClick}
+                className="col-span-8 sm:col-span-9 py-2 px-2.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-950/40 border border-emerald-400/30 flex items-center justify-center gap-1.5 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+                title="Send pre-filled WhatsApp inquiry to seller"
+              >
+                <MessageSquare className="w-3.5 h-3.5 fill-white text-emerald-600 shrink-0" />
+                <span className="truncate">WhatsApp Inquiry</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleOpenContactModal}
+                className="col-span-4 sm:col-span-3 py-2 px-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-200 hover:text-white border border-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                title="View full seller phone and contact details"
+              >
+                <PhoneCall className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span className="text-[11px] font-semibold">Call</span>
+              </button>
             </div>
           </div>
 

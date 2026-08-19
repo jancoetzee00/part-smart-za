@@ -1,71 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { InventoryCard } from './InventoryCard';
 import { ListingDetailModal } from './ListingDetailModal';
 import { useApp } from '../context/AppContext';
 import { InventoryItem } from '../types';
-import { SearchX, SlidersHorizontal, HardHat, PlusCircle } from 'lucide-react';
+import { SearchX, SlidersHorizontal, HardHat, PlusCircle, Search, Sparkles } from 'lucide-react';
+import { executeSearchEngine } from '../lib/searchEngine';
 
 interface InventoryGridProps {
   onOpenSellerPortal: () => void;
+  onOpenSearchEngine?: () => void;
 }
 
-export const InventoryGrid: React.FC<InventoryGridProps> = ({ onOpenSellerPortal }) => {
+export const InventoryGrid: React.FC<InventoryGridProps> = ({
+  onOpenSellerPortal,
+  onOpenSearchEngine
+}) => {
   const { inventory, filter, resetFilters } = useApp();
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
-  // Filter inventory
-  const filteredItems = inventory.filter((item) => {
-    // Search query match
-    if (filter.searchQuery.trim() !== '') {
-      const q = filter.searchQuery.toLowerCase();
-      const matchesTitle = item.title.toLowerCase().includes(q);
-      const matchesMake = item.make.toLowerCase().includes(q);
-      const matchesModel = item.model.toLowerCase().includes(q);
-      const matchesSubcat = item.subcategory.toLowerCase().includes(q);
-      const matchesPartNo = item.partNumber ? item.partNumber.toLowerCase().includes(q) : false;
-      const matchesDesc = item.description.toLowerCase().includes(q);
-      if (!matchesTitle && !matchesMake && !matchesModel && !matchesSubcat && !matchesPartNo && !matchesDesc) {
-        return false;
-      }
-    }
+  // Use the Smart Search Engine algorithm for high visibility, synonym expansion, and typo tolerance
+  const searchResults = useMemo(() => {
+    return executeSearchEngine(inventory, {
+      query: filter.searchQuery,
+      category: filter.category,
+      subcategory: filter.subcategory,
+      condition: filter.condition,
+      province: filter.province,
+      make: filter.make,
+      sortBy: filter.sortBy,
+      expandSynonyms: true
+    });
+  }, [
+    inventory,
+    filter.searchQuery,
+    filter.category,
+    filter.subcategory,
+    filter.condition,
+    filter.province,
+    filter.make,
+    filter.sortBy
+  ]);
 
-    // Category match
-    if (filter.category !== 'all' && item.category !== filter.category) {
-      return false;
-    }
-
-    // Subcategory match
-    if (filter.subcategory !== 'All' && !item.subcategory.toLowerCase().includes(filter.subcategory.toLowerCase())) {
-      return false;
-    }
-
-    // Condition match
-    if (filter.condition !== 'all' && item.condition !== filter.condition) {
-      return false;
-    }
-
-    // Province match
-    if (filter.province !== 'all' && item.province !== filter.province) {
-      return false;
-    }
-
-    return true;
-  });
-
-  // Sort items
-  const sortedItems = [...filteredItems].sort((a, b) => {
-    if (filter.sortBy === 'price_low') {
-      return a.priceZar - b.priceZar;
-    }
-    if (filter.sortBy === 'price_high') {
-      return b.priceZar - a.priceZar;
-    }
-    if (filter.sortBy === 'views') {
-      return b.views - a.views;
-    }
-    // Default newest
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
+  const sortedItems = searchResults.map(r => r.item);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -77,19 +53,36 @@ export const InventoryGrid: React.FC<InventoryGridProps> = ({ onOpenSellerPortal
             <span className="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs px-2.5 py-0.5 rounded-full font-bold">
               {sortedItems.length} items
             </span>
+            {filter.searchQuery && (
+              <span className="hidden sm:inline-flex items-center gap-1 text-xs text-slate-400 font-normal">
+                matched via <span className="text-amber-400 font-semibold">Search Engine</span>
+              </span>
+            )}
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
             Verified equipment yards, commercial truck breakers, and auto scrap yards across South Africa
           </p>
         </div>
 
-        <button
-          onClick={onOpenSellerPortal}
-          className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
-        >
-          <PlusCircle className="w-4 h-4" />
-          Advertise Your Inventory
-        </button>
+        <div className="flex items-center gap-2">
+          {onOpenSearchEngine && (
+            <button
+              onClick={onOpenSearchEngine}
+              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span>Smart Search (⌘K)</span>
+            </button>
+          )}
+
+          <button
+            onClick={onOpenSellerPortal}
+            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <PlusCircle className="w-4 h-4" />
+            Advertise Your Inventory
+          </button>
+        </div>
       </div>
 
       {/* Grid or Empty State */}
@@ -110,7 +103,7 @@ export const InventoryGrid: React.FC<InventoryGridProps> = ({ onOpenSellerPortal
           </div>
           <h3 className="text-lg font-bold">No Part or Equipment Listings Found</h3>
           <p className="text-xs text-slate-400 leading-relaxed">
-            We couldn't find any listings matching your search criteria. Try adjusting your filters or resetting your search.
+            We couldn't find any listings matching your search criteria. Try adjusting your filters, searching for an OEM part code, or searching without abbreviations.
           </p>
           <div className="flex justify-center gap-3 pt-2">
             <button

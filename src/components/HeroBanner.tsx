@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Search,
   MapPin,
@@ -9,30 +9,77 @@ import {
   CreditCard,
   Zap,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  Globe,
+  SlidersHorizontal,
+  Hash,
+  Layers,
+  ArrowRight,
+  Check
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { PROVINCES_LIST } from '../data/initialData';
+import { CATEGORY_VISUALS } from '../data/categoryImages';
 import { CategoryType, SAProvince } from '../types';
+import { getLiveSearchSuggestions, POPULAR_SEARCH_TERMS } from '../lib/searchEngine';
 
 interface HeroBannerProps {
   onOpenSellerPortal: () => void;
-  onOpenOwnerAdmin: () => void;
   onOpenSellersDirectory: () => void;
+  onOpenSearchEngine: (initialQuery?: string) => void;
+  onOpenVisibilityCenter: () => void;
 }
 
 export const HeroBanner: React.FC<HeroBannerProps> = ({
   onOpenSellerPortal,
-  onOpenOwnerAdmin,
-  onOpenSellersDirectory
+  onOpenSellersDirectory,
+  onOpenSearchEngine,
+  onOpenVisibilityCenter
 }) => {
   const { filter, setFilter, inventory, sellers } = useApp();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const totalParts = inventory.length;
   const activeSellers = sellers.filter(s => s.subscriptionStatus === 'active').length;
 
+  const categoryCounts = {
+    heavy_equipment: inventory.filter(i => i.category === 'heavy_equipment').length,
+    trucks: inventory.filter(i => i.category === 'trucks').length,
+    cars: inventory.filter(i => i.category === 'cars').length
+  };
+
+  const suggestions = getLiveSearchSuggestions(inventory, filter.searchQuery);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsDropdownOpen(false);
+    onOpenSearchEngine(filter.searchQuery);
+  };
+
+  const handleSelectSuggestion = (term: string) => {
+    setFilter({ searchQuery: term });
+    setIsDropdownOpen(false);
+    onOpenSearchEngine(term);
+  };
+
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('en-ZA', {
+      style: 'currency',
+      currency: 'ZAR',
+      maximumFractionDigits: 0
+    }).format(val);
   };
 
   return (
@@ -46,9 +93,20 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           
           {/* Hero Copy */}
           <div className="lg:col-span-7 space-y-4">
-            <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 px-3 py-1 rounded-full text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>South Africa's Heavy Duty Spares & Equipment Exchange</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 px-3 py-1 rounded-full text-xs font-semibold">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>South Africa's Heavy Duty Spares & Equipment Search Engine</span>
+              </div>
+              <button
+                type="button"
+                onClick={onOpenVisibilityCenter}
+                className="inline-flex items-center gap-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 px-3 py-1 rounded-full text-xs font-semibold transition-colors cursor-pointer"
+                title="View Search Engine & SEO Visibility Score"
+              >
+                <Globe className="w-3.5 h-3.5 text-indigo-400" />
+                <span>SEO & Search Visibility</span>
+              </button>
             </div>
 
             <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">
@@ -59,7 +117,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             </h1>
 
             <p className="text-slate-300 text-sm md:text-base max-w-2xl leading-relaxed">
-              Connect directly with verified South African earthmoving yards, truck breakers, and auto scrap dealers. Monthly seller subscriptions with direct EFT owner banking.
+              Find excavator pumps, truck gearboxes, and automotive spares with our multi-field search engine. Direct WhatsApp & phone leads with verified scrap yards nationwide.
             </p>
 
             {/* Quick Metrics */}
@@ -74,7 +132,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
                 className="flex items-center gap-1.5 bg-indigo-900/40 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded-full font-semibold transition-colors cursor-pointer"
               >
                 <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-                <span><strong className="text-white font-bold">{activeSellers}</strong> Yards Sorted by Province & City</span>
+                <span><strong className="text-white font-bold">{activeSellers}</strong> Yards Sorted by Location</span>
                 <ChevronRight className="w-3 h-3 text-indigo-400" />
               </button>
               <div className="flex items-center gap-2">
@@ -83,119 +141,384 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               </div>
             </div>
 
-            {/* Search Bar Container */}
-            <form onSubmit={handleSearchSubmit} className="pt-2">
-              <div className="bg-slate-900/90 p-2 rounded-2xl border border-slate-800 shadow-2xl backdrop-blur-md flex flex-col md:flex-row gap-2">
-                
-                {/* Search Text Input */}
-                <div className="flex-1 flex items-center gap-2.5 px-3 py-2 bg-slate-950 rounded-xl border border-slate-800 focus-within:border-amber-500 transition-colors">
-                  <Search className="w-4 h-4 text-amber-400 shrink-0" />
-                  <input
-                    type="text"
-                    value={filter.searchQuery}
-                    onChange={(e) => setFilter({ searchQuery: e.target.value })}
-                    placeholder="Search CAT excavator pump, Scania gearbox, Hilux GD-6..."
-                    className="w-full bg-transparent text-white text-xs md:text-sm placeholder:text-slate-500 focus:outline-none"
-                  />
-                </div>
+            {/* Live Search Engine Container */}
+            <div ref={dropdownRef} className="relative pt-2">
+              <form onSubmit={handleSearchSubmit}>
+                <div className="bg-slate-900/90 p-2 rounded-2xl border-2 border-slate-800 focus-within:border-amber-500 shadow-2xl backdrop-blur-md flex flex-col md:flex-row gap-2 transition-all">
+                  
+                  {/* Search Text Input with Live Autocomplete */}
+                  <div className="flex-1 flex items-center gap-2.5 px-3 py-2 bg-slate-950 rounded-xl border border-slate-800 focus-within:border-amber-500 transition-colors">
+                    <Search className="w-4 h-4 text-amber-400 shrink-0" />
+                    <input
+                      type="text"
+                      value={filter.searchQuery}
+                      onChange={(e) => {
+                        setFilter({ searchQuery: e.target.value });
+                        setIsDropdownOpen(true);
+                      }}
+                      onFocus={() => setIsDropdownOpen(true)}
+                      placeholder="Search CAT excavator pump, Scania gearbox, Hilux GD-6 engine, diff..."
+                      className="w-full bg-transparent text-white text-xs md:text-sm placeholder:text-slate-500 focus:outline-none"
+                    />
+                  </div>
 
-                {/* Province Selector */}
-                <div className="flex items-center gap-2 px-3 py-2 bg-slate-950 rounded-xl border border-slate-800 shrink-0">
-                  <MapPin className="w-4 h-4 text-amber-400 shrink-0" />
-                  <select
-                    value={filter.province}
-                    onChange={(e) => setFilter({ province: e.target.value as SAProvince | 'all' })}
-                    className="bg-transparent text-slate-200 text-xs font-medium focus:outline-none cursor-pointer"
+                  {/* Province Selector */}
+                  <div className="flex items-center gap-2 px-3 py-2 bg-slate-950 rounded-xl border border-slate-800 shrink-0">
+                    <MapPin className="w-4 h-4 text-amber-400 shrink-0" />
+                    <select
+                      value={filter.province}
+                      onChange={(e) => setFilter({ province: e.target.value as SAProvince | 'all' })}
+                      className="bg-transparent text-slate-200 text-xs font-medium focus:outline-none cursor-pointer"
+                    >
+                      <option value="all" className="bg-slate-900 text-white">All SA Provinces</option>
+                      {PROVINCES_LIST.map((prov) => (
+                        <option key={prov} value={prov} className="bg-slate-900 text-white">
+                          {prov}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Submit Search Button */}
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2 shrink-0 cursor-pointer"
                   >
-                    <option value="all" className="bg-slate-900 text-white">All SA Provinces</option>
-                    {PROVINCES_LIST.map((prov) => (
-                      <option key={prov} value={prov} className="bg-slate-900 text-white">
-                        {prov}
-                      </option>
-                    ))}
-                  </select>
+                    <span>Search</span>
+                    <span className="hidden sm:inline-block bg-slate-950/20 text-[10px] px-1.5 py-0.5 rounded font-mono">
+                      ⌘K
+                    </span>
+                  </button>
                 </div>
+              </form>
 
-                {/* Submit Search Button */}
-                <button
-                  type="button"
-                  onClick={() => setFilter({ category: filter.category })}
-                  className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2 shrink-0 cursor-pointer"
-                >
-                  Find Parts
-                </button>
+              {/* Live Autocomplete Suggestions Dropdown */}
+              {isDropdownOpen && (suggestions.parts.length > 0 || suggestions.makes.length > 0 || suggestions.oemPartNumbers.length > 0) && (
+                <div className="absolute top-full left-0 right-0 mt-2 z-40 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-4 text-xs space-y-3 backdrop-blur-xl animate-in fade-in duration-150">
+                  
+                  {/* Matching Parts List */}
+                  {suggestions.parts.length > 0 && (
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                        Matching Listed Spares
+                      </span>
+                      <div className="space-y-1">
+                        {suggestions.parts.map((p) => (
+                          <div
+                            key={p.id}
+                            onClick={() => handleSelectSuggestion(p.title)}
+                            className="p-2 bg-slate-950 hover:bg-slate-800 rounded-xl border border-slate-800/80 flex items-center justify-between gap-2 cursor-pointer transition-colors group"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Search className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                              <span className="text-white group-hover:text-amber-400 font-semibold truncate">
+                                {p.title}
+                              </span>
+                              {p.partNumber && (
+                                <span className="bg-slate-900 text-slate-400 font-mono text-[10px] px-1.5 py-0.2 rounded shrink-0">
+                                  #{p.partNumber}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-amber-400 font-extrabold shrink-0">
+                              {formatCurrency(p.price)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Matching Brands / Makes */}
+                  {suggestions.makes.length > 0 && (
+                    <div className="space-y-1.5 pt-1 border-t border-slate-800">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                        Browse by Manufacturer
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {suggestions.makes.map((m) => (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => handleSelectSuggestion(m)}
+                            className="px-2.5 py-1 bg-slate-950 hover:bg-amber-500 hover:text-slate-950 text-slate-300 rounded-lg border border-slate-800 font-bold text-xs transition-colors cursor-pointer"
+                          >
+                            {m}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Matching OEM Part Numbers */}
+                  {suggestions.oemPartNumbers.length > 0 && (
+                    <div className="space-y-1.5 pt-1 border-t border-slate-800">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                        Matching OEM Part Codes
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {suggestions.oemPartNumbers.map((oem) => (
+                          <button
+                            key={oem}
+                            type="button"
+                            onClick={() => handleSelectSuggestion(oem)}
+                            className="px-2 py-1 bg-slate-950 hover:bg-slate-800 text-amber-300 font-mono rounded-lg border border-slate-800 text-[11px] transition-colors cursor-pointer flex items-center gap-1"
+                          >
+                            <Hash className="w-3 h-3 text-amber-400" />
+                            <span>{oem}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Launch Full Search Engine Button */}
+                  <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsDropdownOpen(false);
+                        onOpenSearchEngine(filter.searchQuery);
+                      }}
+                      className="text-xs text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      <SlidersHorizontal className="w-3.5 h-3.5" />
+                      <span>Open Advanced Search Engine with Price & OEM Filters</span>
+                    </button>
+                    <span className="text-[10px] text-slate-500">Press Enter to Search</span>
+                  </div>
+
+                </div>
+              )}
+
+              {/* Popular Search Quick Chips under search bar */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-2.5 text-[11px] text-slate-400">
+                <span className="font-bold text-slate-500 uppercase tracking-wider mr-1">Popular:</span>
+                {POPULAR_SEARCH_TERMS.slice(0, 4).map((term) => (
+                  <button
+                    key={term}
+                    type="button"
+                    onClick={() => {
+                      setFilter({ searchQuery: term });
+                      onOpenSearchEngine(term);
+                    }}
+                    className="px-2.5 py-0.5 bg-slate-900/80 hover:bg-slate-850 hover:text-amber-400 text-slate-300 rounded-full border border-slate-800/80 transition-colors cursor-pointer"
+                  >
+                    {term}
+                  </button>
+                ))}
               </div>
-            </form>
+            </div>
           </div>
 
           {/* Category Cards & Seller Banner */}
-          <div className="lg:col-span-5 space-y-3">
+          <div className="lg:col-span-5 space-y-3.5">
             
-            {/* Quick Category Buttons */}
-            <div className="grid grid-cols-3 gap-3">
-              <button
-                onClick={() => setFilter({ category: 'heavy_equipment', subcategory: 'All' })}
-                className={`p-3.5 rounded-2xl border text-left transition-all ${
-                  filter.category === 'heavy_equipment'
-                    ? 'bg-amber-500/15 border-amber-500 text-amber-300'
-                    : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 text-slate-300'
-                }`}
-              >
-                <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400 mb-2">
-                  <HardHat className="w-4 h-4" />
-                </div>
-                <div className="font-bold text-xs text-white">Heavy Equipment</div>
-                <div className="text-[10px] text-slate-400 mt-0.5">CAT, Komatsu, JCB</div>
-              </button>
+            {/* Machinery Category Visual Cards */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Machinery Categories & Spares</span>
+                </span>
+                {filter.category !== 'all' && (
+                  <button
+                    onClick={() => setFilter({ category: 'all', subcategory: 'All' })}
+                    className="text-[10px] text-amber-400 hover:text-amber-300 font-semibold cursor-pointer underline"
+                  >
+                    View All Categories
+                  </button>
+                )}
+              </div>
 
-              <button
-                onClick={() => setFilter({ category: 'trucks', subcategory: 'All' })}
-                className={`p-3.5 rounded-2xl border text-left transition-all ${
-                  filter.category === 'trucks'
-                    ? 'bg-amber-500/15 border-amber-500 text-amber-300'
-                    : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 text-slate-300'
-                }`}
-              >
-                <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400 mb-2">
-                  <Truck className="w-4 h-4" />
-                </div>
-                <div className="font-bold text-xs text-white">Trucks & Commercial</div>
-                <div className="text-[10px] text-slate-400 mt-0.5">Scania, Volvo, Isuzu</div>
-              </button>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                
+                {/* Heavy Equipment */}
+                <div
+                  onClick={() => setFilter({ category: 'heavy_equipment', subcategory: 'All' })}
+                  className={`group relative overflow-hidden rounded-2xl border transition-all cursor-pointer p-3 flex flex-col justify-between min-h-[135px] ${
+                    filter.category === 'heavy_equipment'
+                      ? 'border-amber-500 bg-slate-900 ring-2 ring-amber-500/40 shadow-lg shadow-amber-500/10'
+                      : 'border-slate-800 bg-slate-900/90 hover:border-slate-700 hover:bg-slate-850'
+                  }`}
+                >
+                  {/* Category Image with Gradient Overlay */}
+                  <div className="absolute inset-0 z-0 overflow-hidden">
+                    <img
+                      src={CATEGORY_VISUALS.heavy_equipment.image}
+                      alt={CATEGORY_VISUALS.heavy_equipment.alt}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover opacity-35 group-hover:opacity-50 group-hover:scale-105 transition-all duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/40" />
+                  </div>
 
-              <button
-                onClick={() => setFilter({ category: 'cars', subcategory: 'All' })}
-                className={`p-3.5 rounded-2xl border text-left transition-all ${
-                  filter.category === 'cars'
-                    ? 'bg-amber-500/15 border-amber-500 text-amber-300'
-                    : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 text-slate-300'
-                }`}
-              >
-                <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400 mb-2">
-                  <Car className="w-4 h-4" />
+                  {/* Top Bar: Icon + Count Badge */}
+                  <div className="relative z-10 flex items-center justify-between">
+                    <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                      <HardHat className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="bg-slate-950/80 backdrop-blur-sm border border-amber-500/30 text-amber-400 font-extrabold text-[10px] px-2 py-0.5 rounded-full">
+                      {categoryCounts.heavy_equipment} Parts
+                    </span>
+                  </div>
+
+                  {/* Bottom Info: Title & Makes */}
+                  <div className="relative z-10 space-y-0.5 pt-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-bold text-xs text-white group-hover:text-amber-300 transition-colors">
+                        Heavy Equipment
+                      </h3>
+                      {filter.category === 'heavy_equipment' && (
+                        <span className="w-4 h-4 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center">
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-slate-300 line-clamp-1 font-medium">
+                      CAT • Komatsu • Bell
+                    </p>
+                  </div>
                 </div>
-                <div className="font-bold text-xs text-white">Cars & Bakkies</div>
-                <div className="text-[10px] text-slate-400 mt-0.5">Toyota, Ford, Spares</div>
-              </button>
+
+                {/* Commercial Trucks */}
+                <div
+                  onClick={() => setFilter({ category: 'trucks', subcategory: 'All' })}
+                  className={`group relative overflow-hidden rounded-2xl border transition-all cursor-pointer p-3 flex flex-col justify-between min-h-[135px] ${
+                    filter.category === 'trucks'
+                      ? 'border-blue-500 bg-slate-900 ring-2 ring-blue-500/40 shadow-lg shadow-blue-500/10'
+                      : 'border-slate-800 bg-slate-900/90 hover:border-slate-700 hover:bg-slate-850'
+                  }`}
+                >
+                  {/* Category Image with Gradient Overlay */}
+                  <div className="absolute inset-0 z-0 overflow-hidden">
+                    <img
+                      src={CATEGORY_VISUALS.trucks.image}
+                      alt={CATEGORY_VISUALS.trucks.alt}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover opacity-35 group-hover:opacity-50 group-hover:scale-105 transition-all duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/40" />
+                  </div>
+
+                  {/* Top Bar: Icon + Count Badge */}
+                  <div className="relative z-10 flex items-center justify-between">
+                    <div className="w-7 h-7 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                      <Truck className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="bg-slate-950/80 backdrop-blur-sm border border-blue-500/30 text-blue-400 font-extrabold text-[10px] px-2 py-0.5 rounded-full">
+                      {categoryCounts.trucks} Parts
+                    </span>
+                  </div>
+
+                  {/* Bottom Info: Title & Makes */}
+                  <div className="relative z-10 space-y-0.5 pt-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-bold text-xs text-white group-hover:text-blue-300 transition-colors">
+                        Commercial Trucks
+                      </h3>
+                      {filter.category === 'trucks' && (
+                        <span className="w-4 h-4 rounded-full bg-blue-500 text-white flex items-center justify-center">
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-slate-300 line-clamp-1 font-medium">
+                      Scania • Volvo • Isuzu
+                    </p>
+                  </div>
+                </div>
+
+                {/* Cars & Bakkies */}
+                <div
+                  onClick={() => setFilter({ category: 'cars', subcategory: 'All' })}
+                  className={`group relative overflow-hidden rounded-2xl border transition-all cursor-pointer p-3 flex flex-col justify-between min-h-[135px] ${
+                    filter.category === 'cars'
+                      ? 'border-emerald-500 bg-slate-900 ring-2 ring-emerald-500/40 shadow-lg shadow-emerald-500/10'
+                      : 'border-slate-800 bg-slate-900/90 hover:border-slate-700 hover:bg-slate-850'
+                  }`}
+                >
+                  {/* Category Image with Gradient Overlay */}
+                  <div className="absolute inset-0 z-0 overflow-hidden">
+                    <img
+                      src={CATEGORY_VISUALS.cars.image}
+                      alt={CATEGORY_VISUALS.cars.alt}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover opacity-35 group-hover:opacity-50 group-hover:scale-105 transition-all duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/40" />
+                  </div>
+
+                  {/* Top Bar: Icon + Count Badge */}
+                  <div className="relative z-10 flex items-center justify-between">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                      <Car className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="bg-slate-950/80 backdrop-blur-sm border border-emerald-500/30 text-emerald-400 font-extrabold text-[10px] px-2 py-0.5 rounded-full">
+                      {categoryCounts.cars} Parts
+                    </span>
+                  </div>
+
+                  {/* Bottom Info: Title & Makes */}
+                  <div className="relative z-10 space-y-0.5 pt-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-bold text-xs text-white group-hover:text-emerald-300 transition-colors">
+                        Cars & Bakkies
+                      </h3>
+                      {filter.category === 'cars' && (
+                        <span className="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center">
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-slate-300 line-clamp-1 font-medium">
+                      Toyota • Ford • Spares
+                    </p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Search Engine Shortcut Card */}
+            <div
+              onClick={() => onOpenSearchEngine()}
+              className="bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/20 border border-slate-800 hover:border-amber-500/50 p-3.5 rounded-2xl flex items-center justify-between gap-3.5 cursor-pointer transition-all shadow-md group"
+            >
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
+                  <Search className="w-3.5 h-3.5" />
+                  <span>Smart Search Engine Command Center</span>
+                </div>
+                <p className="text-[11px] text-slate-300">
+                  Search OEM part codes, machine brands, synonyms & price filters.
+                </p>
+              </div>
+
+              <div className="px-3 py-1.5 bg-amber-500 group-hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl transition-colors shrink-0 flex items-center gap-1">
+                <span>Launch</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </div>
             </div>
 
             {/* Seller Subscription CTA Box */}
-            <div className="bg-gradient-to-br from-slate-900 to-slate-900/90 border border-slate-800 p-4 rounded-2xl flex items-center justify-between gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
-                  <CreditCard className="w-3.5 h-3.5" />
+            <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-2xl flex items-center justify-between gap-3.5">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300">
+                  <CreditCard className="w-3.5 h-3.5 text-amber-400" />
                   <span>Are you a Spares Yard or Breaker?</span>
                 </div>
-                <p className="text-xs text-slate-300">
-                  Subscribe from <strong>R450/month</strong>. List inventory & edit anytime.
+                <p className="text-[11px] text-slate-400">
+                  Subscribe from <strong>R450/month</strong> for nationwide search visibility.
                 </p>
               </div>
 
               <button
+                type="button"
                 onClick={onOpenSellerPortal}
-                className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 font-bold text-xs rounded-xl transition-all whitespace-nowrap shrink-0 flex items-center gap-1 cursor-pointer"
+                className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 font-bold text-xs rounded-xl transition-all whitespace-nowrap shrink-0 flex items-center gap-1 cursor-pointer"
               >
-                Subscribe <ChevronRight className="w-3.5 h-3.5" />
+                Plans <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
 

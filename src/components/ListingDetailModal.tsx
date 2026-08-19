@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { InventoryItem } from '../types';
 import { useApp } from '../context/AppContext';
+import { CATEGORY_VISUALS } from '../data/categoryImages';
+import { generateWhatsappInquiryUrl } from '../lib/whatsapp';
 
 interface ListingDetailModalProps {
   item: InventoryItem;
@@ -45,11 +47,8 @@ export const ListingDetailModal: React.FC<ListingDetailModalProps> = ({
   };
 
   const handleWhatsapp = () => {
-    const cleanPhone = item.sellerWhatsapp.replace(/\+/g, '');
-    const text = encodeURIComponent(
-      `Hello ${item.sellerName}, I am inquiring about your listing "${item.title}" (${formatCurrency(item.priceZar)}) listed on Part-Smart-ZA.`
-    );
-    window.open(`https://wa.me/${cleanPhone}?text=${text}`, '_blank');
+    const waUrl = generateWhatsappInquiryUrl(item, seller);
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handlePhone = () => {
@@ -87,19 +86,18 @@ export const ListingDetailModal: React.FC<ListingDetailModalProps> = ({
               
               {/* Main Photo */}
               <div className="relative aspect-[4/3] bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-inner">
-                {item.images && item.images.length > 0 ? (
-                  <img
-                    src={item.images[selectedImageIndex] || item.images[0]}
-                    alt={item.title}
-                    className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-slate-600">
-                    <HardHat className="w-12 h-12 opacity-30" />
-                    <span className="text-xs mt-2">No Photo Provided</span>
-                  </div>
-                )}
+                <img
+                  src={item.images && item.images.length > 0 && item.images[selectedImageIndex] ? item.images[selectedImageIndex] : (CATEGORY_VISUALS[item.category]?.image || CATEGORY_VISUALS.heavy_equipment.image)}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    const fallback = CATEGORY_VISUALS[item.category]?.image || CATEGORY_VISUALS.heavy_equipment.image;
+                    if (e.currentTarget.src !== fallback) {
+                      e.currentTarget.src = fallback;
+                    }
+                  }}
+                />
                 
                 <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur px-3 py-1 rounded-xl text-amber-400 text-sm font-black border border-slate-800">
                   {formatCurrency(item.priceZar)}
@@ -117,7 +115,7 @@ export const ListingDetailModal: React.FC<ListingDetailModalProps> = ({
                         selectedImageIndex === idx ? 'border-amber-500 scale-105' : 'border-slate-800 opacity-60'
                       }`}
                     >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
+                      <img src={img} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                     </button>
                   ))}
                 </div>

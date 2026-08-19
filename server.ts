@@ -1,10 +1,6 @@
 import express from "express";
 import path from "path";
-import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
@@ -17,11 +13,54 @@ async function startServer() {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
+  // Search Engine Robots.txt
+  app.get("/robots.txt", (req, res) => {
+    res.type("text/plain");
+    res.send(
+      `User-agent: *\nAllow: /\nSitemap: https://partsmart.co.za/sitemap.xml\n`
+    );
+  });
+
+  // Dynamic XML Sitemap for Search Engines
+  app.get("/sitemap.xml", (req, res) => {
+    res.type("application/xml");
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://partsmart.co.za/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://partsmart.co.za/heavy-equipment</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://partsmart.co.za/trucks</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://partsmart.co.za/cars</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://partsmart.co.za/sellers</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>`;
+    res.send(sitemap);
+  });
+
   // Example API endpoint for general server status / config
   app.get("/api/info", (req, res) => {
     res.json({
       name: "Part-Smart-ZA API Server",
       environment: process.env.NODE_ENV || "development",
+      features: ["search_engine", "sitemap", "robots_txt", "seo_schema"],
     });
   });
 
