@@ -14,7 +14,8 @@ import {
   Share2,
   ExternalLink,
   Info,
-  CreditCard
+  CreditCard,
+  Trash2
 } from 'lucide-react';
 import { InventoryItem } from '../types';
 import { useApp } from '../context/AppContext';
@@ -32,11 +33,22 @@ export const ListingDetailModal: React.FC<ListingDetailModalProps> = ({
   onClose,
   onOpenSellerPortal
 }) => {
-  const { sellers, ownerSettings } = useApp();
+  const { sellers, ownerSettings, isOwnerAdminLoggedIn, deleteInventoryItem } = useApp();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   const seller = sellers.find(s => s.id === item.sellerId);
   const isSellerActive = seller?.subscriptionStatus === 'active';
+
+  const handleDeleteByOwner = () => {
+    if (!isConfirmingDelete) {
+      setIsConfirmingDelete(true);
+      setTimeout(() => setIsConfirmingDelete(false), 4000);
+      return;
+    }
+    deleteInventoryItem(item.id);
+    onClose();
+  };
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-ZA', {
@@ -68,12 +80,28 @@ export const ListingDetailModal: React.FC<ListingDetailModalProps> = ({
             <span className="text-xs text-slate-400">Listing ID: #{item.id}</span>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-full transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {isOwnerAdminLoggedIn && (
+              <button
+                onClick={handleDeleteByOwner}
+                className={`px-3 py-1.5 ${
+                  isConfirmingDelete
+                    ? 'bg-rose-500 text-white animate-pulse'
+                    : 'bg-rose-600 hover:bg-rose-500 text-white'
+                } text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shadow`}
+                title="Owner Action: Delete this listing from platform"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{isConfirmingDelete ? 'Confirm Permanent Delete?' : 'Delete Listing (Owner)'}</span>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-full transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Modal Body */}

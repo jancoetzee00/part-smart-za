@@ -9,7 +9,8 @@ import {
   MessageSquare,
   Sparkles,
   AlertCircle,
-  PhoneCall
+  PhoneCall,
+  Trash2
 } from 'lucide-react';
 import { InventoryItem } from '../types';
 import { useApp } from '../context/AppContext';
@@ -23,11 +24,22 @@ interface InventoryCardProps {
 }
 
 export const InventoryCard: React.FC<InventoryCardProps> = ({ item, onSelect }) => {
-  const { sellers, incrementViews } = useApp();
+  const { sellers, incrementViews, isOwnerAdminLoggedIn, deleteInventoryItem } = useApp();
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   const seller = sellers.find(s => s.id === item.sellerId);
   const isSellerActive = seller?.subscriptionStatus === 'active';
+
+  const handleDeleteByOwner = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isConfirmingDelete) {
+      setIsConfirmingDelete(true);
+      setTimeout(() => setIsConfirmingDelete(false), 4000);
+      return;
+    }
+    deleteInventoryItem(item.id);
+  };
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-ZA', {
@@ -127,8 +139,23 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({ item, onSelect }) 
             </div>
           )}
 
-          {/* Condition Badge */}
-          <div className="absolute top-2.5 right-2.5 z-10">
+          {/* Condition Badge & Owner Delete Button */}
+          <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1.5">
+            {isOwnerAdminLoggedIn && (
+              <button
+                type="button"
+                onClick={handleDeleteByOwner}
+                className={`${
+                  isConfirmingDelete
+                    ? 'bg-rose-500 text-white animate-pulse'
+                    : 'bg-rose-600/90 hover:bg-rose-600 text-white'
+                } p-1 rounded-md shadow-lg border border-rose-400/50 flex items-center gap-1 text-[10px] font-bold px-1.5 cursor-pointer transition-all hover:scale-105`}
+                title="Owner Action: Delete this listing from Part-Smart-ZA"
+              >
+                <Trash2 className="w-3 h-3" />
+                <span>{isConfirmingDelete ? 'Confirm Delete?' : 'Delete (Owner)'}</span>
+              </button>
+            )}
             {getConditionBadge(item.condition)}
           </div>
 

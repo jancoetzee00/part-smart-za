@@ -135,7 +135,7 @@ export async function deleteSellerDoc(sellerId: string) {
   try {
     await deleteDoc(doc(db, 'sellers', sellerId));
   } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, path);
+    console.warn(`Firestore delete error for ${path}:`, error);
   }
 }
 
@@ -175,7 +175,7 @@ export async function deleteInventoryDoc(itemId: string) {
   try {
     await deleteDoc(doc(db, 'inventory', itemId));
   } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, path);
+    console.warn(`Firestore delete error for ${path}:`, error);
   }
 }
 

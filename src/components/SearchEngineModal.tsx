@@ -24,7 +24,8 @@ import {
   ShieldCheck,
   RotateCcw,
   Layers,
-  ArrowRight
+  ArrowRight,
+  Trash2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import {
@@ -54,7 +55,7 @@ export const SearchEngineModal: React.FC<SearchEngineModalProps> = ({
   initialQuery = '',
   onOpenSellerPortal
 }) => {
-  const { inventory, sellers, setFilter } = useApp();
+  const { inventory, sellers, setFilter, isOwnerAdminLoggedIn, deleteInventoryItem } = useApp();
 
   const [query, setQuery] = useState(initialQuery);
   const [selectedCategory, setSelectedCategory] = useState<CategoryType | 'all'>('all');
@@ -67,6 +68,7 @@ export const SearchEngineModal: React.FC<SearchEngineModalProps> = ({
   const [onlyWithPartNumber, setOnlyWithPartNumber] = useState<boolean>(false);
   const [expandSynonyms, setExpandSynonyms] = useState<boolean>(true);
   const [sortBy, setSortBy] = useState<SearchOptions['sortBy']>('relevance');
+  const [itemPendingDeleteId, setItemPendingDeleteId] = useState<string | null>(null);
 
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     try {
@@ -652,6 +654,30 @@ export const SearchEngineModal: React.FC<SearchEngineModalProps> = ({
                       </div>
 
                       <div className="flex items-center gap-1.5">
+                        {isOwnerAdminLoggedIn && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (itemPendingDeleteId !== item.id) {
+                                setItemPendingDeleteId(item.id);
+                                setTimeout(() => setItemPendingDeleteId(null), 4000);
+                                return;
+                              }
+                              deleteInventoryItem(item.id);
+                              setItemPendingDeleteId(null);
+                            }}
+                            className={`px-2 py-1.5 ${
+                              itemPendingDeleteId === item.id
+                                ? 'bg-rose-500 text-white animate-pulse'
+                                : 'bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white'
+                            } border border-rose-500/30 text-xs font-bold rounded-xl transition-colors flex items-center gap-1 cursor-pointer`}
+                            title="Owner Action: Delete this listing"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            {itemPendingDeleteId === item.id && <span className="text-[10px]">Delete?</span>}
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={(e) => {

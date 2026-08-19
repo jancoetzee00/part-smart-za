@@ -48,12 +48,14 @@ interface AppContextType {
   updateSeller: (seller: Seller) => void;
   updateSellerStatus: (sellerId: string, status: SubscriptionStatus, dueDate?: string) => void;
   submitPaymentProof: (sellerId: string, reference: string) => void;
+  deleteSeller: (sellerId: string, deleteAssociatedListings?: boolean) => void;
   removeUnpaidSellerAndListings: (sellerId: string) => void;
 
   // Inventory management
   addInventoryItem: (item: Omit<InventoryItem, 'id' | 'views' | 'createdAt' | 'updatedAt'>) => void;
   updateInventoryItem: (item: InventoryItem) => void;
   deleteInventoryItem: (itemId: string) => void;
+  deleteMultipleInventoryItems: (itemIds: string[]) => void;
   incrementViews: (itemId: string) => void;
 
   // Filtering
@@ -138,14 +140,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // Subscribe to Sellers
     const unsubscribeSellers = subscribeSellers((remoteSellers) => {
-      if (remoteSellers && remoteSellers.length > 0) {
+      if (Array.isArray(remoteSellers)) {
         setSellers(remoteSellers);
       }
     });
 
     // Subscribe to Inventory
     const unsubscribeInventory = subscribeInventory((remoteInventory) => {
-      if (remoteInventory && remoteInventory.length > 0) {
+      if (Array.isArray(remoteInventory)) {
         setInventory(remoteInventory);
       }
     });
@@ -281,21 +283,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     saveSellerDoc(updatedSeller);
   };
 
-  // OWNER REMOVE / EDIT UNPAID SUBSCRIPTION
-  const removeUnpaidSellerAndListings = (sellerId: string) => {
-    // Remove seller
-    setSellers(prev => prev.filter(s => s.id !== sellerId));
-    deleteSellerDoc(sellerId);
+  // OWNER DELETE SELLER & ALL ASSOCIATED LISTINGS
+  const deleteSeller = (sellerId: string, deleteAssociatedListings: boolean = true) => {
+    // 1. Remove seller from state
+    setSellers(prev => {
+      const updated = prev.filter(s => s.id !== sellerId);
+      try {
+        localStorage.setItem(STORAGE_KEYS.SELLERS, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
 
-    // Remove all inventory items belonging to this unpaid seller
-    const sellerItems = inventory.filter(item => item.sellerId === sellerId);
-    setInventory(prev => prev.filter(item => item.sellerId !== sellerId));
-    sellerItems.forEach(item => deleteInventoryDoc(item.id));
+    // 2. Remove seller document from Firestore
+    deleteSellerDoc(sellerId).catch(err => console.warn('Could not delete seller doc:', err));
 
-    // If active seller was this one, clear active seller session
+    // 3. Remove all inventory items belonging to this seller
+    if (deleteAssociatedListings) {
+      setInventory(prev => {
+        const remaining = prev.filter(item => item.sellerId !== sellerId);
+        const sellerItems = prev.filter(item => item.sellerId === sellerId);
+        try {
+          localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(remaining));
+        } catch {}
+        sellerItems.forEach(item => {
+          deleteInventoryDoc(item.id).catch(err => console.warn('Could not delete item doc:', err));
+        });
+        return remaining;
+      });
+    }
+
+    // 4. If active seller was this one, clear active seller session
     if (activeSellerId === sellerId) {
       setActiveSellerIdState(null);
+      try {
+        localStorage.removeItem(STORAGE_KEYS.ACTIVE_SELLER_ID);
+      } catch {}
     }
+  };
+
+  // Keep for backwards compatibility
+  const removeUnpaidSellerAndListings = (sellerId: string) => {
+    deleteSeller(sellerId, true);
   };
 
   // Inventory Operations
@@ -322,8 +350,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteInventoryItem = (itemId: string) => {
-    setInventory(prev => prev.filter(item => item.id !== itemId));
-    deleteInventoryDoc(itemId);
+    setInventory(prev => {
+      const remaining = prev.filter(item => item.id !== itemId);
+      try {
+        localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(remaining));
+      } catch {}
+      return remaining;
+    });
+    deleteInventoryDoc(itemId).catch(err => console.warn('Could not delete item doc:', err));
+  };
+
+  const deleteMultipleInventoryItems = (itemIds: string[]) => {
+    if (!itemIds || itemIds.length === 0) return;
+    const idSet = new Set(itemIds);
+    setInventory(prev => {
+      const remaining = prev.filter(item => !idSet.has(item.id));
+      try {
+        localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(remaining));
+      } catch {}
+      return remaining;
+    });
+    itemIds.forEach(id => {
+      deleteInventoryDoc(id).catch(err => console.warn('Could not delete item doc:', err));
+    });
   };
 
   const incrementViews = (itemId: string) => {
@@ -369,10 +418,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateSeller,
         updateSellerStatus,
         submitPaymentProof,
+        deleteSeller,
         removeUnpaidSellerAndListings,
         addInventoryItem,
         updateInventoryItem,
         deleteInventoryItem,
+        deleteMultipleInventoryItems,
         incrementViews,
         setFilter,
         resetFilters,
