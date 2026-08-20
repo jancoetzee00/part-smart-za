@@ -15,7 +15,8 @@ import {
   ExternalLink,
   Info,
   CreditCard,
-  Trash2
+  Trash2,
+  Heart
 } from 'lucide-react';
 import { InventoryItem } from '../types';
 import { useApp } from '../context/AppContext';
@@ -33,10 +34,11 @@ export const ListingDetailModal: React.FC<ListingDetailModalProps> = ({
   onClose,
   onOpenSellerPortal
 }) => {
-  const { sellers, ownerSettings, isOwnerAdminLoggedIn, deleteInventoryItem } = useApp();
+  const { sellers, ownerSettings, isOwnerAdminLoggedIn, deleteInventoryItem, isFavorite, toggleFavorite } = useApp();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
+  const isFav = isFavorite(item.id);
   const seller = sellers.find(s => s.id === item.sellerId);
   const isSellerActive = seller?.subscriptionStatus === 'active';
 
@@ -81,6 +83,20 @@ export const ListingDetailModal: React.FC<ListingDetailModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Save to Favorites Toggle Button */}
+            <button
+              onClick={() => toggleFavorite(item.id)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border ${
+                isFav
+                  ? 'bg-rose-600 border-rose-500 text-white shadow-md shadow-rose-950/50'
+                  : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300 hover:text-rose-400'
+              }`}
+              title={isFav ? 'Remove from Saved Parts' : 'Save to Favorites'}
+            >
+              <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-white text-white' : 'text-rose-400'}`} />
+              <span>{isFav ? 'Saved' : 'Save Part'}</span>
+            </button>
+
             {isOwnerAdminLoggedIn && (
               <button
                 onClick={handleDeleteByOwner}

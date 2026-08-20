@@ -1,6 +1,6 @@
 {
   "name": "Part-Smart-ZA",
-  "description": "South African advertising & marketplace platform for Car, Truck, and Heavy Equipment inventory with seller monthly subscriptions, owner banking configuration, and subscription management.",
+  "description": "South African advertising & marketplace platform for Car, Truck, and Heavy Equipment inventory with seller specials, yard competitions, monthly subscriptions, and owner banking configuration.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

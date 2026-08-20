@@ -21,7 +21,14 @@ import {
   orderBy
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
-import { InventoryItem, OwnerSettings, Seller } from '../types';
+import {
+  InventoryItem,
+  OwnerSettings,
+  Seller,
+  SellerSpecial,
+  SellerCompetition,
+  CompetitionEntry
+} from '../types';
 
 // Initialize Firebase App
 const app = initializeApp(firebaseConfig);
@@ -208,11 +215,116 @@ export async function saveOwnerSettingsDoc(settings: OwnerSettings) {
   }
 }
 
+// 4. Specials Collection Sync
+export function subscribeSpecials(
+  onData: (specials: SellerSpecial[]) => void,
+  onError?: (err: any) => void
+) {
+  const path = 'specials';
+  return onSnapshot(
+    collection(db, path),
+    (snapshot) => {
+      const specials: SellerSpecial[] = [];
+      snapshot.forEach((docSnap) => {
+        specials.push({ id: docSnap.id, ...docSnap.data() } as SellerSpecial);
+      });
+      onData(specials);
+    },
+    (error) => {
+      handleFirestoreError(error, OperationType.GET, path);
+      if (onError) onError(error);
+    }
+  );
+}
+
+export async function saveSpecialDoc(special: SellerSpecial) {
+  const path = `specials/${special.id}`;
+  try {
+    await setDoc(doc(db, 'specials', special.id), special, { merge: true });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+export async function deleteSpecialDoc(specialId: string) {
+  const path = `specials/${specialId}`;
+  try {
+    await deleteDoc(doc(db, 'specials', specialId));
+  } catch (error) {
+    console.warn(`Firestore delete error for ${path}:`, error);
+  }
+}
+
+// 5. Competitions Collection Sync
+export function subscribeCompetitions(
+  onData: (competitions: SellerCompetition[]) => void,
+  onError?: (err: any) => void
+) {
+  const path = 'competitions';
+  return onSnapshot(
+    collection(db, path),
+    (snapshot) => {
+      const comps: SellerCompetition[] = [];
+      snapshot.forEach((docSnap) => {
+        comps.push({ id: docSnap.id, ...docSnap.data() } as SellerCompetition);
+      });
+      onData(comps);
+    },
+    (error) => {
+      handleFirestoreError(error, OperationType.GET, path);
+      if (onError) onError(error);
+    }
+  );
+}
+
+export async function saveCompetitionDoc(comp: SellerCompetition) {
+  const path = `competitions/${comp.id}`;
+  try {
+    await setDoc(doc(db, 'competitions', comp.id), comp, { merge: true });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+// 6. Competition Entries Sync
+export function subscribeCompetitionEntries(
+  onData: (entries: CompetitionEntry[]) => void,
+  onError?: (err: any) => void
+) {
+  const path = 'competition_entries';
+  return onSnapshot(
+    collection(db, path),
+    (snapshot) => {
+      const entries: CompetitionEntry[] = [];
+      snapshot.forEach((docSnap) => {
+        entries.push({ id: docSnap.id, ...docSnap.data() } as CompetitionEntry);
+      });
+      onData(entries);
+    },
+    (error) => {
+      handleFirestoreError(error, OperationType.GET, path);
+      if (onError) onError(error);
+    }
+  );
+}
+
+export async function saveCompetitionEntryDoc(entry: CompetitionEntry) {
+  const path = `competition_entries/${entry.id}`;
+  try {
+    await setDoc(doc(db, 'competition_entries', entry.id), entry, { merge: true });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
 // Helper to seed initial data to Firestore if collection is empty
 export async function seedInitialFirebaseDataIfEmpty(
   initialInventory: InventoryItem[],
   initialSellers: Seller[],
-  initialOwnerSettings: OwnerSettings
+  initialOwnerSettings: OwnerSettings,
+  initialSpecials?: SellerSpecial[],
+  initialCompetitions?: SellerCompetition[],
+  initialEntries?: CompetitionEntry[]
 ) {
   try {
     // Check sellers
@@ -238,6 +350,39 @@ export async function seedInitialFirebaseDataIfEmpty(
     if (ownerSnap.empty) {
       console.log('Seeding initial owner settings to Firestore...');
       await setDoc(doc(db, 'owner_settings', 'config'), initialOwnerSettings);
+    }
+
+    // Check specials
+    if (initialSpecials && initialSpecials.length > 0) {
+      const specialsSnap = await getDocs(collection(db, 'specials'));
+      if (specialsSnap.empty) {
+        console.log('Seeding initial specials to Firestore...');
+        for (const sp of initialSpecials) {
+          await setDoc(doc(db, 'specials', sp.id), sp);
+        }
+      }
+    }
+
+    // Check competitions
+    if (initialCompetitions && initialCompetitions.length > 0) {
+      const compsSnap = await getDocs(collection(db, 'competitions'));
+      if (compsSnap.empty) {
+        console.log('Seeding initial competitions to Firestore...');
+        for (const cp of initialCompetitions) {
+          await setDoc(doc(db, 'competitions', cp.id), cp);
+        }
+      }
+    }
+
+    // Check competition entries
+    if (initialEntries && initialEntries.length > 0) {
+      const entriesSnap = await getDocs(collection(db, 'competition_entries'));
+      if (entriesSnap.empty) {
+        console.log('Seeding initial competition entries to Firestore...');
+        for (const en of initialEntries) {
+          await setDoc(doc(db, 'competition_entries', en.id), en);
+        }
+      }
     }
   } catch (err) {
     console.warn('Could not seed initial data to Firestore (may be offline or restricted):', err);

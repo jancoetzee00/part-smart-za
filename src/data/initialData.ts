@@ -5,7 +5,10 @@ import {
   SubscriptionPlan,
   CategoryType,
   PartCondition,
-  SAProvince
+  SAProvince,
+  SellerSpecial,
+  SellerCompetition,
+  CompetitionEntry
 } from '../types';
 
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
@@ -409,4 +412,303 @@ export const PROVINCES_LIST: SAProvince[] = [
   'Limpopo',
   'North West',
   'Northern Cape'
+];
+
+export const INITIAL_SPECIALS: SellerSpecial[] = [
+  {
+    id: 'special-1',
+    sellerId: 'seller-1',
+    sellerName: 'Highveld Earthmoving Spares',
+    sellerPhone: '+27 82 459 1102',
+    sellerWhatsapp: '27824591102',
+    sellerCity: 'Boksburg',
+    sellerProvince: 'Gauteng',
+    title: 'CAT 320D Main Hydraulic Pump (Refurbished)',
+    category: 'heavy_equipment',
+    subcategory: 'Hydraulics & Pumps',
+    badge: '28% OFF FLASH SALE',
+    originalPriceZar: 48000,
+    specialPriceZar: 34500,
+    description: 'Fully overhauled Kawasaki / CAT main hydraulic pump assembly. Flow tested under simulated 350 bar working pressure. Includes 6-month yard exchange warranty and free same-day freight anywhere in Gauteng.',
+    terms: 'Valid until 30 September 2026 or while 2 units remain. Price excludes VAT.',
+    expiresAt: '2026-09-30T23:59:59.000Z',
+    imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
+    isFeatured: true,
+    views: 342,
+    createdAt: '2026-08-10T08:00:00.000Z'
+  },
+  {
+    id: 'special-2',
+    sellerId: 'seller-2',
+    sellerName: 'Cape Truck Breakers & Diesels',
+    sellerPhone: '+27 83 912 3344',
+    sellerWhatsapp: '27839123344',
+    sellerCity: 'Epping',
+    sellerProvince: 'Western Cape',
+    title: 'Scania R500 / R560 V8 Complete Gearbox (GRS905R)',
+    category: 'trucks',
+    subcategory: 'Gearboxes & Drivetrain',
+    badge: 'CLEARANCE DEAL',
+    originalPriceZar: 75000,
+    specialPriceZar: 58000,
+    description: 'Direct import European low-mileage Scania Opticruise transmission with built-in retarder. Stripped, synchros inspected, and ready for drop-in replacement. Immediate nationwide courier dispatch available.',
+    terms: 'Exchange unit required or R5,000 core deposit applies. Valid while stocks last.',
+    expiresAt: '2026-09-15T23:59:59.000Z',
+    imageUrl: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=800&q=80',
+    isFeatured: true,
+    views: 418,
+    createdAt: '2026-08-12T10:30:00.000Z'
+  },
+  {
+    id: 'special-3',
+    sellerId: 'seller-4',
+    sellerName: 'Jozi Scrap & Auto Recyclers',
+    sellerPhone: '+27 84 332 9988',
+    sellerWhatsapp: '27843329988',
+    sellerCity: 'Soweto',
+    sellerProvince: 'Gauteng',
+    title: 'Toyota Hilux 2.8 GD-6 Complete Running Engine (1GD-FTV)',
+    category: 'cars',
+    subcategory: 'Engine & Components',
+    badge: 'SAVE R14,000',
+    originalPriceZar: 68000,
+    specialPriceZar: 54000,
+    description: 'Low 42,000km salvage Toyota Hilux 2.8 GD-6 complete with turbo, injectors, diesel common rail pump, and alternator. Compression tested and video of engine running on test bench available on WhatsApp.',
+    terms: 'Sold with microdot clearance certificate and scrap purchase invoice.',
+    expiresAt: '2026-09-25T23:59:59.000Z',
+    imageUrl: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=800&q=80',
+    isFeatured: true,
+    views: 589,
+    createdAt: '2026-08-14T14:15:00.000Z'
+  },
+  {
+    id: 'special-4',
+    sellerId: 'seller-3',
+    sellerName: 'Durban Commercial Truck Dismantlers',
+    sellerPhone: '+27 71 884 5511',
+    sellerWhatsapp: '27718845511',
+    sellerCity: 'Pinetown',
+    sellerProvince: 'KwaZulu-Natal',
+    title: 'Mercedes-Benz Actros MP3 / MP4 Front Steer Axle Combo',
+    category: 'trucks',
+    subcategory: 'Axles, Differentials & Hubs',
+    badge: 'BUNDLE COMBO',
+    originalPriceZar: 32000,
+    specialPriceZar: 24500,
+    description: 'Complete front steer axle with heavy-duty disc brake calipers, ABS sensor rings, and wheel hubs. Perfect for quick fleet overhaul and roadworthy preparation.',
+    terms: 'Special yard pickup or Durban harbor dispatch.',
+    expiresAt: '2026-09-20T23:59:59.000Z',
+    imageUrl: 'https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&w=800&q=80',
+    isFeatured: false,
+    views: 215,
+    createdAt: '2026-08-15T09:00:00.000Z'
+  },
+  {
+    id: 'special-5',
+    sellerId: 'seller-5',
+    sellerName: 'Lowveld Mining & Plant Salvage',
+    sellerPhone: '+27 79 123 7744',
+    sellerWhatsapp: '27791237744',
+    sellerCity: 'Witbank',
+    sellerProvince: 'Mpumalanga',
+    title: 'Komatsu PC200/PC300 Track Link Assembly & Shoe Combo',
+    category: 'heavy_equipment',
+    subcategory: 'Under carriage & Rubber Tracks',
+    badge: 'BULK MINING SPECIAL',
+    originalPriceZar: 52000,
+    specialPriceZar: 38000,
+    description: 'Heavy duty sealed & lubricated track chain assembly (49 links per side). High manganese steel excavator shoes included. Suitable for harsh quarrying and coal mining applications in Mpumalanga.',
+    terms: 'Price per side set. Includes new master pins.',
+    expiresAt: '2026-10-05T23:59:59.000Z',
+    imageUrl: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=800&q=80',
+    isFeatured: true,
+    views: 310,
+    createdAt: '2026-08-16T11:45:00.000Z'
+  }
+];
+
+export const INITIAL_COMPETITIONS: SellerCompetition[] = [
+  {
+    id: 'comp-1',
+    title: 'Spring 2026 Yard Master Championship',
+    tagline: 'South Africa’s premier scrapyard & equipment dismantler sprint',
+    description: 'Join the nation’s top equipment recyclers and commercial truck breakers! List quality verified parts with clear OEM part numbers, respond promptly to WhatsApp buyer inquiries, and earn points on every verified enquiry and five-star rating.',
+    categoryType: 'yard_excellence',
+    prizePool: 'R30,000 Cash + 6 Months Free Unlimited Dealer Plan + Homepage Spotlight',
+    prizes: [
+      { rank: '1st Place Winner', reward: 'R15,000 Cash + 6 Months Free Unlimited Dealer Tier + Platform Champion Trophy Badge', badge: '🥇 Gold Yard Master' },
+      { rank: '2nd Place Runner-Up', reward: 'R10,000 Cash + 3 Months Free Pro Tier + Priority Search Placement', badge: '🥈 Silver Yard Specialist' },
+      { rank: '3rd Place', reward: 'R5,000 Cash + 1 Month Free Pro Tier + Verified Dismantler Badge', badge: '🥉 Bronze Yard Pro' }
+    ],
+    startDate: '2026-08-01T00:00:00.000Z',
+    endDate: '2026-09-30T23:59:59.000Z',
+    status: 'active',
+    bannerImage: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80',
+    rules: [
+      'Must be a registered seller yard in South Africa with an active or pending subscription.',
+      'Inventory listings must contain genuine high-resolution photos and accurate OEM part numbers.',
+      'Yard managers must respond to WhatsApp buyer inquiries within 30 minutes during business hours.',
+      'Zero tolerance for fake serials or stolen salvage parts — all entries are vetted by PartSmart ZA admin.'
+    ],
+    criteria: [
+      'Listing Volume & Accuracy (40% Weight)',
+      'WhatsApp Inquiry Response Speed (30% Weight)',
+      'Verified Part Photos & Video Demos (20% Weight)',
+      'Customer Satisfaction & Deal Closures (10% Weight)'
+    ],
+    participantsCount: 38,
+    leaderboard: [
+      {
+        sellerId: 'seller-1',
+        sellerName: 'Highveld Earthmoving Spares',
+        city: 'Boksburg',
+        province: 'Gauteng',
+        metricLabel: 'Verified Listings & Fast Leads',
+        metricValue: '984 Pts (98% Response)',
+        rank: 1,
+        badgeTitle: '🥇 Current Leader',
+        highlightNote: 'Top CAT & Komatsu Hydraulic inventory volume'
+      },
+      {
+        sellerId: 'seller-2',
+        sellerName: 'Cape Truck Breakers & Diesels',
+        city: 'Epping',
+        province: 'Western Cape',
+        metricLabel: 'Verified Listings & Fast Leads',
+        metricValue: '890 Pts (95% Response)',
+        rank: 2,
+        badgeTitle: '🥈 Contender',
+        highlightNote: 'Fastest Scania & Volvo transmission quotes'
+      },
+      {
+        sellerId: 'seller-3',
+        sellerName: 'Durban Commercial Truck Dismantlers',
+        city: 'Pinetown',
+        province: 'KwaZulu-Natal',
+        metricLabel: 'Verified Listings & Fast Leads',
+        metricValue: '760 Pts (92% Response)',
+        rank: 3,
+        badgeTitle: '🥉 Podium Yard',
+        highlightNote: 'Exceptional heavy truck axle & diff specials'
+      },
+      {
+        sellerId: 'seller-5',
+        sellerName: 'Lowveld Mining & Plant Salvage',
+        city: 'Witbank',
+        province: 'Mpumalanga',
+        metricLabel: 'Verified Listings & Fast Leads',
+        metricValue: '685 Pts (90% Response)',
+        rank: 4,
+        badgeTitle: '⭐ Top 5 Yard',
+        highlightNote: 'Excavator & Dozer undercarriage specialists'
+      },
+      {
+        sellerId: 'seller-4',
+        sellerName: 'Jozi Scrap & Auto Recyclers',
+        city: 'Soweto',
+        province: 'Gauteng',
+        metricLabel: 'Verified Listings & Fast Leads',
+        metricValue: '610 Pts (88% Response)',
+        rank: 5,
+        badgeTitle: '⭐ Top 5 Yard',
+        highlightNote: 'Massive volume of bakkie engines & body panels'
+      }
+    ],
+    createdAt: '2026-08-01T00:00:00.000Z'
+  },
+  {
+    id: 'comp-2',
+    title: 'Lightning WhatsApp Responder Cup',
+    tagline: 'Speed wins the deal: Fastest yard response times across South Africa',
+    description: 'Fleet managers and mechanics need parts urgently to avoid downtime. Compete in our WhatsApp response speed sprint. Maintain an average reply time under 10 minutes and earn fuel vouchers and featured listing boosts.',
+    categoryType: 'trucks',
+    prizePool: 'R15,000 Fuel Vouchers + 1 Year Featured Spotlight',
+    prizes: [
+      { rank: '1st Place Speed King', reward: 'R8,000 Shell/Engen Fuel Voucher + 1-Year Featured Yard Spotlight', badge: '⚡ Lightning Winner' },
+      { rank: '2nd Place', reward: 'R4,500 Fuel Voucher + 6-Month Pro Upgrade', badge: '⚡ Fast Responder' },
+      { rank: '3rd Place', reward: 'R2,500 Fuel Voucher + 3-Month Pro Upgrade', badge: '⚡ Quick Quote Pro' }
+    ],
+    startDate: '2026-08-15T00:00:00.000Z',
+    endDate: '2026-10-15T23:59:59.000Z',
+    status: 'active',
+    bannerImage: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=1200&q=80',
+    rules: [
+      'Response times measured on verified buyer WhatsApp leads routed through Part-Smart ZA.',
+      'Must provide honest stock status and transparent pricing in the initial response.',
+      'Active for all verified sellers nationwide.'
+    ],
+    criteria: [
+      'Average Response Time (<10 minutes)',
+      'Successful Quote Delivery Ratio',
+      'Buyer Feedback on Professionalism'
+    ],
+    participantsCount: 29,
+    leaderboard: [
+      {
+        sellerId: 'seller-2',
+        sellerName: 'Cape Truck Breakers & Diesels',
+        city: 'Epping',
+        province: 'Western Cape',
+        metricLabel: 'Avg Response Time',
+        metricValue: '3.8 mins (99.2% rate)',
+        rank: 1,
+        badgeTitle: '⚡ Speed Leader',
+        highlightNote: 'Instant automated stock quotes & video inspections'
+      },
+      {
+        sellerId: 'seller-1',
+        sellerName: 'Highveld Earthmoving Spares',
+        city: 'Boksburg',
+        province: 'Gauteng',
+        metricLabel: 'Avg Response Time',
+        metricValue: '4.5 mins (98.0% rate)',
+        rank: 2,
+        badgeTitle: '⚡ 2nd Place',
+        highlightNote: 'Dedicated spares WhatsApp desk'
+      },
+      {
+        sellerId: 'seller-4',
+        sellerName: 'Jozi Scrap & Auto Recyclers',
+        city: 'Soweto',
+        province: 'Gauteng',
+        metricLabel: 'Avg Response Time',
+        metricValue: '6.2 mins (94.5% rate)',
+        rank: 3,
+        badgeTitle: '⚡ 3rd Place',
+        highlightNote: 'Rapid bakkie engine and gearbox quotations'
+      }
+    ],
+    createdAt: '2026-08-15T00:00:00.000Z'
+  }
+];
+
+export const INITIAL_COMPETITION_ENTRIES: CompetitionEntry[] = [
+  {
+    id: 'entry-1',
+    competitionId: 'comp-1',
+    sellerId: 'seller-1',
+    sellerName: 'Highveld Earthmoving Spares',
+    sellerWhatsapp: '27824591102',
+    sellerCity: 'Boksburg',
+    entryTitle: 'Complete Overhaul of CAT 345C Excavator Slew Motor & Planetary Gearbox',
+    entryDescription: 'We completely stripped, rebuilt, and tolerance-tested a 2.4-ton slew drive with new genuine Caterpillar seal kits and bearings. Delivered to a mining contractor in Rustenburg with zero machine downtime.',
+    imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
+    proofMetrics: 'Overhauled in 48 hours • 350 bar pressure bench certified',
+    submittedAt: '2026-08-12T14:30:00.000Z',
+    status: 'approved'
+  },
+  {
+    id: 'entry-2',
+    competitionId: 'comp-1',
+    sellerId: 'seller-2',
+    sellerName: 'Cape Truck Breakers & Diesels',
+    sellerWhatsapp: '27839123344',
+    sellerCity: 'Epping',
+    entryTitle: 'Fleet Salvage of 5x Scania R-Series Streamline Truck Cabs & Drivetrains',
+    entryDescription: 'Dismantled 5 accident-damaged long-haul truck tractors. Cataloged over 180 individual verified items onto Part-Smart ZA within 72 hours, with full HD videos of running DC13 engines.',
+    imageUrl: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=800&q=80',
+    proofMetrics: '180 parts listed • 100% genuine Scania OEM codes',
+    submittedAt: '2026-08-14T09:15:00.000Z',
+    status: 'approved'
+  }
 ];

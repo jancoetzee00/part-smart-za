@@ -1,11 +1,11 @@
 import React from 'react';
-import { Filter, RotateCcw, MapPin, Tag, ArrowUpDown, HardHat, Truck, Car } from 'lucide-react';
+import { Filter, RotateCcw, MapPin, Tag, ArrowUpDown, HardHat, Truck, Car, Heart } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { PROVINCES_LIST, SUBCATEGORIES } from '../data/initialData';
 import { CategoryType, PartCondition, SAProvince, FilterState } from '../types';
 
 export const InventoryFilter: React.FC = () => {
-  const { filter, setFilter, resetFilters, inventory } = useApp();
+  const { filter, setFilter, resetFilters, favorites } = useApp();
 
   const currentCategory = filter.category;
 
@@ -29,7 +29,8 @@ export const InventoryFilter: React.FC = () => {
     filter.subcategory !== 'All' ||
     filter.condition !== 'all' ||
     filter.province !== 'all' ||
-    filter.make !== '';
+    filter.make !== '' ||
+    !!filter.onlyFavorites;
 
   return (
     <div className="bg-slate-900 border-b border-slate-800 text-white py-4 px-4 shadow-md sticky top-14 z-30">
@@ -38,12 +39,12 @@ export const InventoryFilter: React.FC = () => {
         {/* Top Controls Row */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           
-          {/* Main Category Selector Tabs */}
-          <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+          {/* Main Category Selector Tabs & Favorites Tab */}
+          <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 flex-wrap">
             <button
-              onClick={() => setFilter({ category: 'all', subcategory: 'All' })}
+              onClick={() => setFilter({ category: 'all', subcategory: 'All', onlyFavorites: false })}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                filter.category === 'all'
+                filter.category === 'all' && !filter.onlyFavorites
                   ? 'bg-amber-500 text-slate-950 shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
@@ -51,9 +52,9 @@ export const InventoryFilter: React.FC = () => {
               All Categories
             </button>
             <button
-              onClick={() => setFilter({ category: 'heavy_equipment', subcategory: 'All' })}
+              onClick={() => setFilter({ category: 'heavy_equipment', subcategory: 'All', onlyFavorites: false })}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
-                filter.category === 'heavy_equipment'
+                filter.category === 'heavy_equipment' && !filter.onlyFavorites
                   ? 'bg-amber-500 text-slate-950 shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
@@ -62,9 +63,9 @@ export const InventoryFilter: React.FC = () => {
               Heavy
             </button>
             <button
-              onClick={() => setFilter({ category: 'trucks', subcategory: 'All' })}
+              onClick={() => setFilter({ category: 'trucks', subcategory: 'All', onlyFavorites: false })}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
-                filter.category === 'trucks'
+                filter.category === 'trucks' && !filter.onlyFavorites
                   ? 'bg-amber-500 text-slate-950 shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
@@ -73,15 +74,30 @@ export const InventoryFilter: React.FC = () => {
               Trucks
             </button>
             <button
-              onClick={() => setFilter({ category: 'cars', subcategory: 'All' })}
+              onClick={() => setFilter({ category: 'cars', subcategory: 'All', onlyFavorites: false })}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
-                filter.category === 'cars'
+                filter.category === 'cars' && !filter.onlyFavorites
                   ? 'bg-amber-500 text-slate-950 shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
               <Car className="w-3.5 h-3.5" />
               Cars
+            </button>
+
+            {/* Saved Parts Toggle Pill */}
+            <div className="h-4 w-px bg-slate-800 mx-0.5 hidden sm:block"></div>
+            <button
+              onClick={() => setFilter({ onlyFavorites: !filter.onlyFavorites })}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                filter.onlyFavorites
+                  ? 'bg-rose-600 text-white shadow-md shadow-rose-950/40'
+                  : 'text-slate-400 hover:text-rose-400 hover:bg-slate-900'
+              }`}
+              title="Toggle Saved Inventory Items"
+            >
+              <Heart className={`w-3.5 h-3.5 ${filter.onlyFavorites ? 'fill-white text-white' : 'text-rose-400'}`} />
+              <span>Saved ({favorites.length})</span>
             </button>
           </div>
 

@@ -89,6 +89,81 @@ export interface OwnerSettings {
   ownerPhone: string;
 }
 
+export interface SellerSpecial {
+  id: string;
+  sellerId: string;
+  sellerName: string;
+  sellerPhone: string;
+  sellerWhatsapp: string;
+  sellerCity: string;
+  sellerProvince: SAProvince;
+  title: string;
+  category: CategoryType;
+  subcategory: string;
+  badge: string; // e.g. "45% OFF", "Clearance Deal", "Free Delivery in GP", "Bundle Combo"
+  originalPriceZar: number;
+  specialPriceZar: number;
+  description: string;
+  terms?: string;
+  expiresAt: string; // ISO string
+  imageUrl: string;
+  isFeatured?: boolean;
+  views?: number;
+  createdAt: string;
+}
+
+export interface CompetitionPrize {
+  rank: string; // e.g. "1st Place", "2nd Place", "3rd Place"
+  reward: string; // e.g. "R15,000 Cash + 6 Months Free Unlimited Dealer Plan"
+  badge: string; // e.g. "Gold Trophy Yard"
+}
+
+export interface CompetitionLeaderboardItem {
+  sellerId: string;
+  sellerName: string;
+  city: string;
+  province: SAProvince;
+  metricLabel: string;
+  metricValue: string | number;
+  rank: number;
+  badgeTitle: string;
+  highlightNote?: string;
+}
+
+export interface SellerCompetition {
+  id: string;
+  title: string;
+  tagline: string;
+  description: string;
+  categoryType: 'all' | CategoryType | 'yard_excellence';
+  prizePool: string;
+  prizes: CompetitionPrize[];
+  startDate: string;
+  endDate: string;
+  status: 'active' | 'judging' | 'completed';
+  bannerImage: string;
+  rules: string[];
+  criteria: string[];
+  participantsCount: number;
+  leaderboard: CompetitionLeaderboardItem[];
+  createdAt: string;
+}
+
+export interface CompetitionEntry {
+  id: string;
+  competitionId: string;
+  sellerId: string;
+  sellerName: string;
+  sellerWhatsapp: string;
+  sellerCity: string;
+  entryTitle: string;
+  entryDescription: string;
+  imageUrl?: string;
+  proofMetrics?: string;
+  submittedAt: string;
+  status: 'pending' | 'approved' | 'winner';
+}
+
 export interface FilterState {
   searchQuery: string;
   category: CategoryType | 'all';
@@ -99,4 +174,5 @@ export interface FilterState {
   maxPrice?: number;
   make: string;
   sortBy: 'newest' | 'price_low' | 'price_high' | 'views';
+  onlyFavorites?: boolean;
 }

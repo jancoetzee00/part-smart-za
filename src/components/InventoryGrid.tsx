@@ -3,7 +3,7 @@ import { InventoryCard } from './InventoryCard';
 import { ListingDetailModal } from './ListingDetailModal';
 import { useApp } from '../context/AppContext';
 import { InventoryItem } from '../types';
-import { SearchX, SlidersHorizontal, HardHat, PlusCircle, Search, Sparkles } from 'lucide-react';
+import { SearchX, SlidersHorizontal, HardHat, PlusCircle, Search, Sparkles, Heart } from 'lucide-react';
 import { executeSearchEngine } from '../lib/searchEngine';
 
 interface InventoryGridProps {
@@ -15,7 +15,7 @@ export const InventoryGrid: React.FC<InventoryGridProps> = ({
   onOpenSellerPortal,
   onOpenSearchEngine
 }) => {
-  const { inventory, filter, resetFilters } = useApp();
+  const { inventory, filter, resetFilters, setFilter, favorites } = useApp();
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
   // Use the Smart Search Engine algorithm for high visibility, synonym expansion, and typo tolerance
@@ -28,6 +28,8 @@ export const InventoryGrid: React.FC<InventoryGridProps> = ({
       province: filter.province,
       make: filter.make,
       sortBy: filter.sortBy,
+      onlyFavorites: filter.onlyFavorites,
+      favoriteIds: favorites,
       expandSynonyms: true
     });
   }, [
@@ -38,7 +40,9 @@ export const InventoryGrid: React.FC<InventoryGridProps> = ({
     filter.condition,
     filter.province,
     filter.make,
-    filter.sortBy
+    filter.sortBy,
+    filter.onlyFavorites,
+    favorites
   ]);
 
   const sortedItems = searchResults.map(r => r.item);
@@ -49,8 +53,19 @@ export const InventoryGrid: React.FC<InventoryGridProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <span>Available Inventory & Advertised Spares</span>
-            <span className="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs px-2.5 py-0.5 rounded-full font-bold">
+            {filter.onlyFavorites ? (
+              <>
+                <Heart className="w-5 h-5 fill-rose-500 text-rose-500" />
+                <span>Your Saved Parts ({favorites.length})</span>
+              </>
+            ) : (
+              <span>Available Inventory & Advertised Spares</span>
+            )}
+            <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${
+              filter.onlyFavorites 
+                ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' 
+                : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+            }`}>
               {sortedItems.length} items
             </span>
             {filter.searchQuery && (
@@ -60,11 +75,22 @@ export const InventoryGrid: React.FC<InventoryGridProps> = ({
             )}
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Verified equipment yards, commercial truck breakers, and auto scrap yards across South Africa
+            {filter.onlyFavorites
+              ? 'Locally saved equipment, truck parts, and auto spares for rapid comparison and WhatsApp inquiries'
+              : 'Verified equipment yards, commercial truck breakers, and auto scrap yards across South Africa'}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
+          {filter.onlyFavorites && (
+            <button
+              onClick={() => setFilter({ onlyFavorites: false })}
+              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+            >
+              <span>Show All Inventory</span>
+            </button>
+          )}
+
           {onOpenSearchEngine && (
             <button
               onClick={onOpenSearchEngine}
@@ -95,6 +121,24 @@ export const InventoryGrid: React.FC<InventoryGridProps> = ({
               onSelect={(selected) => setSelectedItem(selected)}
             />
           ))}
+        </div>
+      ) : filter.onlyFavorites ? (
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center max-w-xl mx-auto space-y-4 text-white">
+          <div className="w-16 h-16 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center justify-center mx-auto text-rose-400">
+            <Heart className="w-8 h-8" />
+          </div>
+          <h3 className="text-lg font-bold">No Saved Parts Yet</h3>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Click the heart icon on any listing card to save items for quick comparison and future reference. Your saved parts are securely stored on this device.
+          </p>
+          <div className="flex justify-center gap-3 pt-2">
+            <button
+              onClick={() => setFilter({ onlyFavorites: false })}
+              className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-all cursor-pointer shadow-md"
+            >
+              Browse All Available Inventory
+            </button>
+          </div>
         </div>
       ) : (
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center max-w-xl mx-auto space-y-4 text-white">

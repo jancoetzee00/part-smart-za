@@ -22,7 +22,9 @@ import {
   ArrowRight,
   ShieldCheck,
   Star,
-  Layers
+  Layers,
+  Flame,
+  Trophy
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { SUBSCRIPTION_PLANS, PROVINCES_LIST, SUBCATEGORIES } from '../data/initialData';
@@ -38,11 +40,13 @@ import {
 interface SellerPortalModalProps {
   onClose: () => void;
   onOpenOwnerAdmin: () => void;
+  onOpenSpecialsCompetitions?: () => void;
 }
 
 export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
   onClose,
-  onOpenOwnerAdmin
+  onOpenOwnerAdmin,
+  onOpenSpecialsCompetitions
 }) => {
   const {
     sellers,
@@ -53,6 +57,8 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
     ownerSettings,
     submitPaymentProof,
     getSellerListings,
+    getSellerSpecials,
+    getSellerEntries,
     addInventoryItem,
     updateInventoryItem,
     deleteInventoryItem
@@ -60,6 +66,16 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
 
   const [activeTab, setActiveTab] = useState<'inventory' | 'subscription' | 'switch_account' | 'register'>('inventory');
   
+  // Notice & notification state
+  const [actionNotice, setActionNotice] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [itemPendingDelete, setItemPendingDelete] = useState<InventoryItem | null>(null);
+
+  const showNotice = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setActionNotice({ type, message });
+    setTimeout(() => setActionNotice(null), 4000);
+  };
+
   // Registration state
   const [regForm, setRegForm] = useState({
     companyName: '',
@@ -104,11 +120,11 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
   const handleRegisterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!regForm.companyName || !regForm.email || !regForm.phone) {
-      alert('Please fill in all required company contact details.');
+      showNotice('Please fill in all required company contact details.', 'error');
       return;
     }
     const newSeller = registerSeller(regForm);
-    alert(`Account for ${newSeller.companyName} created successfully! Please review Owner Banking Details below to complete your monthly EFT subscription.`);
+    showNotice(`Account for ${newSeller.companyName} created successfully! Please review Owner Banking Details below to complete your monthly EFT subscription.`);
     setActiveTab('subscription');
   };
 
@@ -117,6 +133,7 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
     if (!activeSeller || !eftReference.trim()) return;
     submitPaymentProof(activeSeller.id, eftReference.trim());
     setPaymentSuccessNote('EFT Payment Proof reference submitted! The App Owner will review and activate your monthly subscription shortly.');
+    showNotice('EFT Payment Proof submitted to App Owner for verification.');
     setEftReference('');
   };
 
@@ -128,6 +145,7 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
       planId: newPlanId
     });
     setPlanChangeNote(`Subscription updated to "${targetPlan.name}" (R${targetPlan.priceZar}/month)! Please use the App Owner banking details below to complete your EFT payment.`);
+    showNotice(`Subscription plan updated to ${targetPlan.name}`);
   };
 
   const handleOpenAddItem = () => {
@@ -175,7 +193,7 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
   const handleSaveInventoryItem = (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeSeller) {
-      alert('Please select or register a seller account first.');
+      showNotice('Please select or register a seller account first.', 'error');
       return;
     }
 
@@ -210,19 +228,19 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
         ...editingItem,
         ...payload
       });
-      alert('Listing updated successfully!');
+      showNotice('Listing updated successfully!');
     } else {
       addInventoryItem(payload);
-      alert('New inventory item added to directory!');
+      showNotice('New inventory item added to directory!');
     }
 
     setIsItemFormOpen(false);
   };
 
-  const handleDeleteItem = (itemId: string) => {
-    if (confirm('Are you sure you want to remove this item from your inventory?')) {
-      deleteInventoryItem(itemId);
-    }
+  const confirmDeleteItem = (itemId: string) => {
+    deleteInventoryItem(itemId);
+    setItemPendingDelete(null);
+    showNotice('Item removed from inventory.');
   };
 
   const formatCurrency = (val: number) => {
@@ -233,9 +251,11 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
     }).format(val);
   };
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text: string, fieldName = 'text') => {
     navigator.clipboard.writeText(text);
-    alert(`Copied to clipboard: ${text}`);
+    setCopiedField(fieldName);
+    showNotice(`Copied to clipboard: ${text}`);
+    setTimeout(() => setCopiedField(null), 2500);
   };
 
   // Helper function to resolve active seller plan object safely
@@ -568,7 +588,7 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
 
         {/* Tab Navigation */}
         <div className="bg-slate-950 px-6 py-2 border-b border-slate-800 flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setActiveTab('inventory')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
@@ -579,6 +599,23 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
             >
               My Inventory ({sellerListings.length})
             </button>
+
+            {onOpenSpecialsCompetitions && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenSpecialsCompetitions();
+                }}
+                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-300 font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Post Special Deals or Enter Yard Challenges"
+              >
+                <Flame className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
+                <span>Specials & Competitions</span>
+                <span className="bg-orange-500 text-slate-950 text-[9px] font-black px-1.5 py-0.2 rounded-full">
+                  NEW
+                </span>
+              </button>
+            )}
 
             <button
               onClick={() => setActiveTab('subscription')}
@@ -614,6 +651,64 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
 
         {/* Tab Body */}
         <div className="p-6 space-y-6 flex-1">
+
+          {/* Action Notice Notification Banner */}
+          {actionNotice && (
+            <div
+              className={`p-3.5 rounded-2xl text-xs font-semibold flex items-center justify-between border shadow-lg transition-all animate-fadeIn ${
+                actionNotice.type === 'error'
+                  ? 'bg-rose-500/15 border-rose-500/40 text-rose-300'
+                  : actionNotice.type === 'info'
+                  ? 'bg-blue-500/15 border-blue-500/40 text-blue-300'
+                  : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {actionNotice.type === 'error' ? (
+                  <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                )}
+                <span>{actionNotice.message}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActionNotice(null)}
+                className="p-1 hover:bg-slate-800/60 rounded-lg text-slate-400 hover:text-white"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* In-Modal Delete Confirmation Dialog */}
+          {itemPendingDelete && (
+            <div className="p-4 bg-rose-950/40 border border-rose-500/40 rounded-2xl text-xs space-y-3 shadow-xl">
+              <div className="flex items-center gap-2 text-rose-300 font-bold">
+                <AlertTriangle className="w-4 h-4 text-rose-400" />
+                <span>Confirm Deletion</span>
+              </div>
+              <p className="text-slate-300">
+                Are you sure you want to remove <strong className="text-white">"{itemPendingDelete.title}"</strong> from your inventory?
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => confirmDeleteItem(itemPendingDelete.id)}
+                  className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl cursor-pointer"
+                >
+                  Yes, Remove Item
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setItemPendingDelete(null)}
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* TAB 1: INVENTORY MANAGEMENT */}
           {activeTab === 'inventory' && (
@@ -711,7 +806,7 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
                               <button
-                                onClick={() => handleDeleteItem(item.id)}
+                                onClick={() => setItemPendingDelete(item)}
                                 className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-colors cursor-pointer"
                                 title="Delete Listing"
                               >
@@ -899,11 +994,15 @@ export const SellerPortalModal: React.FC<SellerPortalModalProps> = ({
                             </span>
                             <button
                               type="button"
-                              onClick={() => copyToClipboard(ownerSettings.bankingDetails.accountNumber)}
-                              className="text-slate-400 hover:text-white p-1 cursor-pointer"
+                              onClick={() => copyToClipboard(ownerSettings.bankingDetails.accountNumber, 'accountNumber')}
+                              className="text-slate-400 hover:text-white p-1 cursor-pointer transition-colors"
                               title="Copy Account Number"
                             >
-                              <Copy className="w-3.5 h-3.5" />
+                              {copiedField === 'accountNumber' ? (
+                                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
                             </button>
                           </div>
                         </div>

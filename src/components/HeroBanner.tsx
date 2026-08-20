@@ -15,30 +15,37 @@ import {
   Hash,
   Layers,
   ArrowRight,
-  Check
+  Check,
+  Flame,
+  Trophy
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { PROVINCES_LIST } from '../data/initialData';
 import { CATEGORY_VISUALS } from '../data/categoryImages';
 import { CategoryType, SAProvince } from '../types';
 import { getLiveSearchSuggestions, POPULAR_SEARCH_TERMS } from '../lib/searchEngine';
+import { isLocalAppEnvironment } from '../lib/env';
 
 interface HeroBannerProps {
   onOpenSellerPortal: () => void;
   onOpenSellersDirectory: () => void;
   onOpenSearchEngine: (initialQuery?: string) => void;
   onOpenVisibilityCenter: () => void;
+  onOpenSpecialsCompetitions: () => void;
 }
 
 export const HeroBanner: React.FC<HeroBannerProps> = ({
   onOpenSellerPortal,
   onOpenSellersDirectory,
   onOpenSearchEngine,
-  onOpenVisibilityCenter
+  onOpenVisibilityCenter,
+  onOpenSpecialsCompetitions
 }) => {
-  const { filter, setFilter, inventory, sellers } = useApp();
+  const { filter, setFilter, inventory, sellers, specials, competitions, isOwnerAdminLoggedIn } = useApp();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const showSellersDirectory = isLocalAppEnvironment() || isOwnerAdminLoggedIn;
 
   const totalParts = inventory.length;
   const activeSellers = sellers.filter(s => s.subscriptionStatus === 'active').length;
@@ -126,15 +133,22 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
                 <div className="w-2 h-2 rounded-full bg-amber-500"></div>
                 <span><strong className="text-white font-bold">{totalParts}+</strong> Listed Inventory</span>
               </div>
-              <button
-                type="button"
-                onClick={onOpenSellersDirectory}
-                className="flex items-center gap-1.5 bg-indigo-900/40 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded-full font-semibold transition-colors cursor-pointer"
-              >
-                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-                <span><strong className="text-white font-bold">{activeSellers}</strong> Yards Sorted by Location</span>
-                <ChevronRight className="w-3 h-3 text-indigo-400" />
-              </button>
+              {showSellersDirectory ? (
+                <button
+                  type="button"
+                  onClick={onOpenSellersDirectory}
+                  className="flex items-center gap-1.5 bg-indigo-900/40 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded-full font-semibold transition-colors cursor-pointer"
+                >
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                  <span><strong className="text-white font-bold">{activeSellers}</strong> Yards Sorted by Location</span>
+                  <ChevronRight className="w-3 h-3 text-indigo-400" />
+                </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
+                  <span><strong className="text-white font-bold">{activeSellers}</strong> Verified Yards</span>
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                 <span>Direct WhatsApp & Call Leads</span>
@@ -477,6 +491,30 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
                   </div>
                 </div>
 
+              </div>
+            </div>
+
+            {/* Specials & Competitions Highlight Card */}
+            <div
+              onClick={onOpenSpecialsCompetitions}
+              className="bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-rose-500/15 border border-amber-500/40 hover:border-amber-400 p-3.5 rounded-2xl flex items-center justify-between gap-3.5 cursor-pointer transition-all shadow-md group"
+            >
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2 text-xs font-black text-amber-300">
+                  <Flame className="w-4 h-4 text-orange-400 animate-pulse fill-orange-400" />
+                  <span>Seller Specials & Yard Challenges</span>
+                  <span className="bg-amber-400 text-slate-950 text-[9px] px-1.5 py-0.2 rounded-full font-black uppercase">
+                    {specials.length} Active Deals
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-300">
+                  Flash clearance deals, machine bundles & R45,000+ yard trophy competitions.
+                </p>
+              </div>
+
+              <div className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 group-hover:from-amber-400 group-hover:to-orange-400 text-slate-950 font-black text-xs rounded-xl transition-all shrink-0 flex items-center gap-1 shadow-md">
+                <span>View Deals</span>
+                <ChevronRight className="w-3.5 h-3.5" />
               </div>
             </div>
 

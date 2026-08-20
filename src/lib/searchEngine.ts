@@ -158,6 +158,8 @@ export interface SearchOptions {
   make?: string;
   onlyVerifiedSellers?: boolean;
   onlyWithPartNumber?: boolean;
+  onlyFavorites?: boolean;
+  favoriteIds?: string[];
   sortBy?: 'relevance' | 'newest' | 'price_low' | 'price_high' | 'views';
   expandSynonyms?: boolean;
 }
@@ -179,6 +181,8 @@ export function executeSearchEngine(
     maxPrice,
     make = '',
     onlyWithPartNumber = false,
+    onlyFavorites = false,
+    favoriteIds = [],
     sortBy = 'relevance',
     expandSynonyms = true
   } = options;
@@ -206,6 +210,9 @@ export function executeSearchEngine(
   const results: SearchResultItem[] = [];
 
   for (const item of inventory) {
+    // Favorites only filter
+    if (onlyFavorites && (!favoriteIds || !favoriteIds.includes(item.id))) continue;
+
     // Basic category filter
     if (category !== 'all' && item.category !== category) continue;
 

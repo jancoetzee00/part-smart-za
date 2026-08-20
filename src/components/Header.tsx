@@ -16,7 +16,10 @@ import {
   AlertTriangle,
   Globe,
   Sparkles,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Heart,
+  Flame,
+  Trophy
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { CategoryType } from '../types';
@@ -29,6 +32,7 @@ interface HeaderProps {
   onOpenSellersDirectory: () => void;
   onOpenSearchEngine: () => void;
   onOpenVisibilityCenter: () => void;
+  onOpenSpecialsCompetitions: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -37,12 +41,14 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAiAssistant,
   onOpenSellersDirectory,
   onOpenSearchEngine,
-  onOpenVisibilityCenter
+  onOpenVisibilityCenter,
+  onOpenSpecialsCompetitions
 }) => {
-  const { filter, setFilter, activeSeller, isOwnerAdminLoggedIn, ownerSettings, sellers } = useApp();
+  const { filter, setFilter, activeSeller, isOwnerAdminLoggedIn, ownerSettings, sellers, favorites, specials, competitions } = useApp();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const showOwnerControls = isLocalAppEnvironment() || isOwnerAdminLoggedIn;
+  const showSellersDirectory = isLocalAppEnvironment() || isOwnerAdminLoggedIn;
 
   // Count unpaid sellers
   const unpaidCount = sellers.filter(s => s.subscriptionStatus === 'unpaid' || s.subscriptionStatus === 'pending_verification').length;
@@ -67,24 +73,38 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            {/* Specials & Competitions Shortcut in Top Bar */}
+            <button
+              onClick={onOpenSpecialsCompetitions}
+              className="text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1.5 font-bold cursor-pointer bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 rounded"
+            >
+              <Flame className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
+              <span>Specials & Competitions</span>
+              <span className="bg-orange-500 text-slate-950 px-1 py-0.2 rounded text-[9px] font-black">
+                {specials.length} DEALS
+              </span>
+            </button>
+
             {/* Search Engine & SEO Visibility */}
             <button
               onClick={onOpenVisibilityCenter}
               className="text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1.5 font-semibold cursor-pointer"
             >
               <Globe className="w-3.5 h-3.5" />
-              <span>SEO & Search Visibility</span>
+              <span className="hidden sm:inline">SEO & Search Visibility</span>
             </button>
 
-            {/* Sellers Directory button in top utility bar */}
-            <button
-              onClick={onOpenSellersDirectory}
-              className="text-slate-300 hover:text-amber-400 transition-colors flex items-center gap-1.5 font-semibold cursor-pointer"
-            >
-              <Building2 className="w-3.5 h-3.5" />
-              <span>Sellers Directory</span>
-            </button>
+            {/* Sellers Directory button in top utility bar - Local App / Admin Only */}
+            {showSellersDirectory && (
+              <button
+                onClick={onOpenSellersDirectory}
+                className="text-slate-300 hover:text-amber-400 transition-colors flex items-center gap-1.5 font-semibold cursor-pointer"
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>Sellers Directory</span>
+              </button>
+            )}
 
             {/* Owner Quick Status - Shown on Local App or when logged in */}
             {showOwnerControls && (
@@ -210,14 +230,48 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Action Buttons */}
         <div className="hidden sm:flex items-center gap-2">
-          {/* Yards & Sellers Directory Button */}
+          {/* Specials & Competitions Quick Button */}
           <button
-            onClick={onOpenSellersDirectory}
-            className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
+            onClick={onOpenSpecialsCompetitions}
+            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs flex items-center gap-1.5 transition-all shadow-md shadow-amber-500/20 cursor-pointer"
+            title="View Seller Specials & Scrap Yard Competitions"
           >
-            <Building2 className="w-3.5 h-3.5" />
-            <span>Yards</span>
+            <Flame className="w-4 h-4 fill-slate-950" />
+            <span>Specials & Competitions</span>
+            <span className="bg-slate-950 text-amber-300 text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+              {specials.length}
+            </span>
           </button>
+
+          {/* Saved Parts Button */}
+          <button
+            onClick={() => setFilter({ onlyFavorites: !filter.onlyFavorites })}
+            className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer border ${
+              filter.onlyFavorites
+                ? 'bg-rose-600 border-rose-500 text-white shadow-rose-950/40'
+                : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200 hover:text-white'
+            }`}
+            title="View saved inventory items"
+          >
+            <Heart className={`w-3.5 h-3.5 ${filter.onlyFavorites ? 'fill-white text-white' : favorites.length > 0 ? 'fill-rose-500 text-rose-500' : 'text-slate-400'}`} />
+            <span>Saved</span>
+            {favorites.length > 0 && (
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${filter.onlyFavorites ? 'bg-white text-rose-600' : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'}`}>
+                {favorites.length}
+              </span>
+            )}
+          </button>
+
+          {/* Yards & Sellers Directory Button - Local App / Admin Only */}
+          {showSellersDirectory && (
+            <button
+              onClick={onOpenSellersDirectory}
+              className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              <span>Yards</span>
+            </button>
+          )}
 
           {/* Seller Portal Button */}
           <button
@@ -339,6 +393,34 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           <div className="pt-2 border-t border-slate-800 space-y-2">
+            {/* Specials & Competitions Button in Mobile Menu */}
+            <button
+              onClick={() => {
+                onOpenSpecialsCompetitions();
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 rounded-lg text-xs font-black flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-amber-500/20"
+            >
+              <Flame className="w-4 h-4 fill-slate-950" />
+              <span>Seller Specials & Yard Competitions ({specials.length} Active Deals)</span>
+            </button>
+
+            {/* Saved Parts Button in Mobile Menu */}
+            <button
+              onClick={() => {
+                setFilter({ onlyFavorites: !filter.onlyFavorites });
+                setIsMobileMenuOpen(false);
+              }}
+              className={`w-full py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all ${
+                filter.onlyFavorites
+                  ? 'bg-rose-600 text-white'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
+              }`}
+            >
+              <Heart className={`w-4 h-4 ${filter.onlyFavorites || favorites.length > 0 ? 'fill-rose-500 text-rose-500' : 'text-slate-400'} ${filter.onlyFavorites ? 'fill-white text-white' : ''}`} />
+              <span>Saved Parts ({favorites.length})</span>
+            </button>
+
             <button
               onClick={() => {
                 onOpenVisibilityCenter();
@@ -350,16 +432,19 @@ export const Header: React.FC<HeaderProps> = ({
               <span>SEO & Search Visibility Center</span>
             </button>
 
-            <button
-              onClick={() => {
-                onOpenSellersDirectory();
-                setIsMobileMenuOpen(false);
-              }}
-              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Building2 className="w-4 h-4" />
-              <span>Sellers Directory (By Location)</span>
-            </button>
+            {/* Sellers Directory in Mobile Menu - Local App / Admin Only */}
+            {showSellersDirectory && (
+              <button
+                onClick={() => {
+                  onOpenSellersDirectory();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Building2 className="w-4 h-4" />
+                <span>Sellers Directory (By Location)</span>
+              </button>
+            )}
 
             <button
               onClick={() => {

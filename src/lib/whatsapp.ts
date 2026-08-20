@@ -1,4 +1,4 @@
-import { InventoryItem, Seller } from '../types';
+import { InventoryItem, Seller, SellerSpecial } from '../types';
 
 /**
  * Normalizes phone numbers for WhatsApp deep links (wa.me)
@@ -51,6 +51,53 @@ I found your listing on the *Part-Smart.ZA* marketplace and would like to inquir
 Please confirm:
 1. Is this item currently in stock and available?
 2. What are the collection or courier dispatch options to my area?
+
+Thank you!`;
+
+  return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+}
+
+/**
+ * Generates a pre-filled WhatsApp deep link URL for promotional specials and clearance deals
+ */
+export function generateWhatsappSpecialInquiryUrl(special: SellerSpecial, seller?: Seller): string {
+  const phone = seller?.whatsapp || special.sellerWhatsapp || seller?.phone || special.sellerPhone || '27820000000';
+  const cleanPhone = formatWhatsappPhoneNumber(phone);
+
+  const specialPrice = new Intl.NumberFormat('en-ZA', {
+    style: 'currency',
+    currency: 'ZAR',
+    maximumFractionDigits: 0
+  }).format(special.specialPriceZar);
+
+  const originalPrice = new Intl.NumberFormat('en-ZA', {
+    style: 'currency',
+    currency: 'ZAR',
+    maximumFractionDigits: 0
+  }).format(special.originalPriceZar);
+
+  const savings = new Intl.NumberFormat('en-ZA', {
+    style: 'currency',
+    currency: 'ZAR',
+    maximumFractionDigits: 0
+  }).format(Math.max(0, special.originalPriceZar - special.specialPriceZar));
+
+  const companyName = seller?.companyName || special.sellerName;
+
+  const message =
+`*SPECIAL PROMO INQUIRY | Part-Smart ZA*
+
+Hello ${companyName} Sales Desk,
+
+I saw your promotional special on *Part-Smart.ZA* and would like to claim this deal:
+
+🔥 *Special Deal:* ${special.title}
+🏷️ *Promo Badge:* ${special.badge}
+💰 *Special Price:* ${specialPrice} (Normal Price: ${originalPrice} - Save ${savings})
+📍 *Location:* ${special.sellerCity}, ${special.sellerProvince}
+📝 *Offer Terms:* ${special.terms || 'Subject to stock availability'}
+
+Please let me know if this special is still active and how to proceed with payment and courier delivery or collection.
 
 Thank you!`;
 

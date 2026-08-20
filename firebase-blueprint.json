@@ -73,6 +73,75 @@
         "role": { "type": "string", "maxLength": 50 }
       },
       "required": ["email", "role"]
+    },
+    "SellerSpecial": {
+      "title": "SellerSpecial",
+      "description": "Special clearance deal or promotion published by an equipment or parts seller",
+      "type": "object",
+      "properties": {
+        "sellerId": { "type": "string", "maxLength": 100 },
+        "sellerName": { "type": "string", "maxLength": 200 },
+        "sellerPhone": { "type": "string", "maxLength": 50 },
+        "sellerWhatsapp": { "type": "string", "maxLength": 50 },
+        "sellerCity": { "type": "string", "maxLength": 100 },
+        "sellerProvince": { "type": "string", "maxLength": 50 },
+        "title": { "type": "string", "maxLength": 200 },
+        "category": { "type": "string", "maxLength": 50 },
+        "subcategory": { "type": "string", "maxLength": 100 },
+        "badge": { "type": "string", "maxLength": 100 },
+        "originalPriceZar": { "type": "number" },
+        "specialPriceZar": { "type": "number" },
+        "description": { "type": "string", "maxLength": 2000 },
+        "terms": { "type": "string", "maxLength": 500 },
+        "expiresAt": { "type": "string", "maxLength": 100 },
+        "imageUrl": { "type": "string", "maxLength": 500 },
+        "isFeatured": { "type": "boolean" },
+        "views": { "type": "number" },
+        "createdAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["sellerId", "title", "category", "specialPriceZar", "sellerWhatsapp"]
+    },
+    "SellerCompetition": {
+      "title": "SellerCompetition",
+      "description": "Scrapyard and equipment dismantler competition with prizes and leaderboard",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "tagline": { "type": "string", "maxLength": 300 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "categoryType": { "type": "string", "maxLength": 50 },
+        "prizePool": { "type": "string", "maxLength": 200 },
+        "prizes": { "type": "array" },
+        "startDate": { "type": "string", "maxLength": 100 },
+        "endDate": { "type": "string", "maxLength": 100 },
+        "status": { "type": "string", "maxLength": 50 },
+        "bannerImage": { "type": "string", "maxLength": 500 },
+        "rules": { "type": "array" },
+        "criteria": { "type": "array" },
+        "participantsCount": { "type": "number" },
+        "leaderboard": { "type": "array" },
+        "createdAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["title", "prizePool", "status", "startDate", "endDate"]
+    },
+    "CompetitionEntry": {
+      "title": "CompetitionEntry",
+      "description": "Seller yard showcase entry submitted into an active competition",
+      "type": "object",
+      "properties": {
+        "competitionId": { "type": "string", "maxLength": 100 },
+        "sellerId": { "type": "string", "maxLength": 100 },
+        "sellerName": { "type": "string", "maxLength": 200 },
+        "sellerWhatsapp": { "type": "string", "maxLength": 50 },
+        "sellerCity": { "type": "string", "maxLength": 100 },
+        "entryTitle": { "type": "string", "maxLength": 200 },
+        "entryDescription": { "type": "string", "maxLength": 2000 },
+        "imageUrl": { "type": "string", "maxLength": 500 },
+        "proofMetrics": { "type": "string", "maxLength": 200 },
+        "submittedAt": { "type": "string", "maxLength": 100 },
+        "status": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["competitionId", "sellerId", "entryTitle", "entryDescription"]
     }
   },
   "firestore": {
@@ -83,6 +152,18 @@
     "/inventory/{itemId}": {
       "schema": "InventoryItem",
       "description": "Collection of parts and equipment inventory"
+    },
+    "/specials/{specialId}": {
+      "schema": "SellerSpecial",
+      "description": "Collection of active seller specials and clearance deals"
+    },
+    "/competitions/{competitionId}": {
+      "schema": "SellerCompetition",
+      "description": "Collection of seller scrapyard competitions and challenges"
+    },
+    "/competition_entries/{entryId}": {
+      "schema": "CompetitionEntry",
+      "description": "Submissions and showcase entries from sellers participating in competitions"
     },
     "/owner_settings/{configId}": {
       "schema": "OwnerSettings",

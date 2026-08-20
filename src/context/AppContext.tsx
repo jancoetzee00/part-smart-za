@@ -6,13 +6,19 @@ import {
   Seller,
   FilterState,
   SubscriptionStatus,
-  SubscriptionPlanId
+  SubscriptionPlanId,
+  SellerSpecial,
+  SellerCompetition,
+  CompetitionEntry
 } from '../types';
 import {
   INITIAL_INVENTORY,
   INITIAL_OWNER_SETTINGS,
   INITIAL_SELLERS,
-  SUBSCRIPTION_PLANS
+  SUBSCRIPTION_PLANS,
+  INITIAL_SPECIALS,
+  INITIAL_COMPETITIONS,
+  INITIAL_COMPETITION_ENTRIES
 } from '../data/initialData';
 import {
   testFirebaseConnection,
@@ -20,11 +26,18 @@ import {
   subscribeSellers,
   subscribeInventory,
   subscribeOwnerSettings,
+  subscribeSpecials,
+  subscribeCompetitions,
+  subscribeCompetitionEntries,
   saveSellerDoc,
   deleteSellerDoc,
   saveInventoryDoc,
   deleteInventoryDoc,
-  saveOwnerSettingsDoc
+  saveOwnerSettingsDoc,
+  saveSpecialDoc,
+  deleteSpecialDoc,
+  saveCompetitionDoc,
+  saveCompetitionEntryDoc
 } from '../lib/firebase';
 
 interface AppContextType {
@@ -35,6 +48,10 @@ interface AppContextType {
   activeSellerId: string | null;
   isOwnerAdminLoggedIn: boolean;
   filter: FilterState;
+  favorites: string[];
+  specials: SellerSpecial[];
+  competitions: SellerCompetition[];
+  competitionEntries: CompetitionEntry[];
 
   // Actions
   setActiveSellerId: (id: string | null) => void;
@@ -42,6 +59,11 @@ interface AppContextType {
   logoutOwner: () => void;
   updateOwnerPassword: (newPass: string) => void;
   updateOwnerBankingDetails: (details: OwnerBankingDetails) => void;
+
+  // Favorites
+  isFavorite: (itemId: string) => boolean;
+  toggleFavorite: (itemId: string) => void;
+  clearFavorites: () => void;
 
   // Seller management
   registerSeller: (sellerData: Omit<Seller, 'id' | 'createdAt' | 'subscriptionStatus' | 'subscriptionDueDate'>) => Seller;
@@ -58,6 +80,17 @@ interface AppContextType {
   deleteMultipleInventoryItems: (itemIds: string[]) => void;
   incrementViews: (itemId: string) => void;
 
+  // Specials Management
+  addSpecial: (special: Omit<SellerSpecial, 'id' | 'createdAt' | 'views'>) => SellerSpecial;
+  deleteSpecial: (specialId: string) => void;
+  incrementSpecialViews: (specialId: string) => void;
+
+  // Competitions Management
+  addCompetition: (comp: Omit<SellerCompetition, 'id' | 'createdAt'>) => SellerCompetition;
+  updateCompetition: (comp: SellerCompetition) => void;
+  submitCompetitionEntry: (entry: Omit<CompetitionEntry, 'id' | 'submittedAt' | 'status'>) => CompetitionEntry;
+  updateCompetitionEntryStatus: (entryId: string, status: 'pending' | 'approved' | 'winner') => void;
+
   // Filtering
   setFilter: (newFilter: Partial<FilterState>) => void;
   resetFilters: () => void;
@@ -65,13 +98,19 @@ interface AppContextType {
   // Helpers
   getSellerById: (sellerId: string) => Seller | undefined;
   getSellerListings: (sellerId: string) => InventoryItem[];
+  getSellerSpecials: (sellerId: string) => SellerSpecial[];
+  getSellerEntries: (sellerId: string) => CompetitionEntry[];
 }
 
 const STORAGE_KEYS = {
   INVENTORY: 'part_smart_za_inventory_v1',
   SELLERS: 'part_smart_za_sellers_v1',
   OWNER_SETTINGS: 'part_smart_za_owner_settings_v1',
-  ACTIVE_SELLER_ID: 'part_smart_za_active_seller_id_v1'
+  ACTIVE_SELLER_ID: 'part_smart_za_active_seller_id_v1',
+  FAVORITES: 'part_smart_za_favorites_v1',
+  SPECIALS: 'part_smart_za_specials_v1',
+  COMPETITIONS: 'part_smart_za_competitions_v1',
+  COMPETITION_ENTRIES: 'part_smart_za_competition_entries_v1'
 };
 
 const initialFilterState: FilterState = {
@@ -129,25 +168,99 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Admin authentication state
   const [isOwnerAdminLoggedIn, setIsOwnerAdminLoggedIn] = useState<boolean>(false);
 
+  // Specials state
+  const [specials, setSpecials] = useState<SellerSpecial[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.SPECIALS);
+      return saved ? JSON.parse(saved) : INITIAL_SPECIALS;
+    } catch {
+      return INITIAL_SPECIALS;
+    }
+  });
+
+  // Competitions state
+  const [competitions, setCompetitions] = useState<SellerCompetition[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.COMPETITIONS);
+      return saved ? JSON.parse(saved) : INITIAL_COMPETITIONS;
+    } catch {
+      return INITIAL_COMPETITIONS;
+    }
+  });
+
+  // Competition entries state
+  const [competitionEntries, setCompetitionEntries] = useState<CompetitionEntry[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.COMPETITION_ENTRIES);
+      return saved ? JSON.parse(saved) : INITIAL_COMPETITION_ENTRIES;
+    } catch {
+      return INITIAL_COMPETITION_ENTRIES;
+    }
+  });
+
   // Filters state
   const [filter, setFilterState] = useState<FilterState>(initialFilterState);
+
+  // Favorites state (persisted in local storage)
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.FAVORITES);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Save favorites to localStorage whenever it changes
+  const saveFavorites = (newFavorites: string[]) => {
+    setFavorites(newFavorites);
+    try {
+      localStorage.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(newFavorites));
+    } catch (err) {
+      console.warn('Could not save favorites to localStorage:', err);
+    }
+  };
+
+  const isFavorite = (itemId: string) => {
+    return favorites.includes(itemId);
+  };
+
+  const toggleFavorite = (itemId: string) => {
+    if (!itemId) return;
+    const isFav = favorites.includes(itemId);
+    const updated = isFav
+      ? favorites.filter(id => id !== itemId)
+      : [...favorites, itemId];
+    saveFavorites(updated);
+  };
+
+  const clearFavorites = () => {
+    saveFavorites([]);
+  };
 
   // Initial Firebase setup & real-time synchronization
   useEffect(() => {
     // Test connection & seed initial data if Firestore collections are empty
     testFirebaseConnection();
-    seedInitialFirebaseDataIfEmpty(INITIAL_INVENTORY, INITIAL_SELLERS, INITIAL_OWNER_SETTINGS);
+    seedInitialFirebaseDataIfEmpty(
+      INITIAL_INVENTORY,
+      INITIAL_SELLERS,
+      INITIAL_OWNER_SETTINGS,
+      INITIAL_SPECIALS,
+      INITIAL_COMPETITIONS,
+      INITIAL_COMPETITION_ENTRIES
+    );
 
     // Subscribe to Sellers
     const unsubscribeSellers = subscribeSellers((remoteSellers) => {
-      if (Array.isArray(remoteSellers)) {
+      if (Array.isArray(remoteSellers) && remoteSellers.length > 0) {
         setSellers(remoteSellers);
       }
     });
 
     // Subscribe to Inventory
     const unsubscribeInventory = subscribeInventory((remoteInventory) => {
-      if (Array.isArray(remoteInventory)) {
+      if (Array.isArray(remoteInventory) && remoteInventory.length > 0) {
         setInventory(remoteInventory);
       }
     });
@@ -159,10 +272,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     });
 
+    // Subscribe to Specials
+    const unsubscribeSpecials = subscribeSpecials((remoteSpecials) => {
+      if (Array.isArray(remoteSpecials) && remoteSpecials.length > 0) {
+        setSpecials(remoteSpecials);
+      }
+    });
+
+    // Subscribe to Competitions
+    const unsubscribeCompetitions = subscribeCompetitions((remoteComps) => {
+      if (Array.isArray(remoteComps) && remoteComps.length > 0) {
+        setCompetitions(remoteComps);
+      }
+    });
+
+    // Subscribe to Competition Entries
+    const unsubscribeEntries = subscribeCompetitionEntries((remoteEntries) => {
+      if (Array.isArray(remoteEntries) && remoteEntries.length > 0) {
+        setCompetitionEntries(remoteEntries);
+      }
+    });
+
     return () => {
       unsubscribeSellers();
       unsubscribeInventory();
       unsubscribeOwner();
+      unsubscribeSpecials();
+      unsubscribeCompetitions();
+      unsubscribeEntries();
     };
   }, []);
 
@@ -178,6 +315,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.OWNER_SETTINGS, JSON.stringify(ownerSettings));
   }, [ownerSettings]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.SPECIALS, JSON.stringify(specials));
+  }, [specials]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.COMPETITIONS, JSON.stringify(competitions));
+  }, [competitions]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.COMPETITION_ENTRIES, JSON.stringify(competitionEntries));
+  }, [competitionEntries]);
 
   useEffect(() => {
     if (activeSellerId) {
@@ -386,6 +535,86 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     saveInventoryDoc(updated);
   };
 
+  // Specials Operations
+  const addSpecial = (specialData: Omit<SellerSpecial, 'id' | 'createdAt' | 'views'>): SellerSpecial => {
+    const newSpecial: SellerSpecial = {
+      ...specialData,
+      id: `special-${Date.now()}`,
+      views: 0,
+      createdAt: new Date().toISOString()
+    };
+    setSpecials(prev => [newSpecial, ...prev]);
+    saveSpecialDoc(newSpecial);
+    return newSpecial;
+  };
+
+  const deleteSpecial = (specialId: string) => {
+    setSpecials(prev => {
+      const remaining = prev.filter(s => s.id !== specialId);
+      try {
+        localStorage.setItem(STORAGE_KEYS.SPECIALS, JSON.stringify(remaining));
+      } catch {}
+      return remaining;
+    });
+    deleteSpecialDoc(specialId).catch(err => console.warn('Could not delete special doc:', err));
+  };
+
+  const incrementSpecialViews = (specialId: string) => {
+    const sp = specials.find(s => s.id === specialId);
+    if (!sp) return;
+    const updated = { ...sp, views: (sp.views || 0) + 1 };
+    setSpecials(prev => prev.map(s => (s.id === specialId ? updated : s)));
+    saveSpecialDoc(updated);
+  };
+
+  // Competitions Operations
+  const addCompetition = (compData: Omit<SellerCompetition, 'id' | 'createdAt'>): SellerCompetition => {
+    const newComp: SellerCompetition = {
+      ...compData,
+      id: `comp-${Date.now()}`,
+      createdAt: new Date().toISOString()
+    };
+    setCompetitions(prev => [newComp, ...prev]);
+    saveCompetitionDoc(newComp);
+    return newComp;
+  };
+
+  const updateCompetition = (comp: SellerCompetition) => {
+    setCompetitions(prev => prev.map(c => (c.id === comp.id ? comp : c)));
+    saveCompetitionDoc(comp);
+  };
+
+  const submitCompetitionEntry = (
+    entryData: Omit<CompetitionEntry, 'id' | 'submittedAt' | 'status'>
+  ): CompetitionEntry => {
+    const newEntry: CompetitionEntry = {
+      ...entryData,
+      id: `entry-${Date.now()}`,
+      submittedAt: new Date().toISOString(),
+      status: 'pending'
+    };
+    setCompetitionEntries(prev => [newEntry, ...prev]);
+    saveCompetitionEntryDoc(newEntry);
+
+    // Update competition participant count
+    setCompetitions(prev =>
+      prev.map(c =>
+        c.id === entryData.competitionId
+          ? { ...c, participantsCount: (c.participantsCount || 0) + 1 }
+          : c
+      )
+    );
+    return newEntry;
+  };
+
+  const updateCompetitionEntryStatus = (entryId: string, status: 'pending' | 'approved' | 'winner') => {
+    const target = competitionEntries.find(e => e.id === entryId);
+    if (!target) return;
+    const updated: CompetitionEntry = { ...target, status };
+    setCompetitionEntries(prev => prev.map(e => (e.id === entryId ? updated : e)));
+    saveCompetitionEntryDoc(updated);
+  };
+
   // Filter Operations
   const setFilter = (newFilter: Partial<FilterState>) => {
     setFilterState(prev => ({ ...prev, ...newFilter }));
@@ -398,6 +627,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Helper getters
   const getSellerById = (sellerId: string) => sellers.find(s => s.id === sellerId);
   const getSellerListings = (sellerId: string) => inventory.filter(i => i.sellerId === sellerId);
+  const getSellerSpecials = (sellerId: string) => specials.filter(s => s.sellerId === sellerId);
+  const getSellerEntries = (sellerId: string) => competitionEntries.filter(e => e.sellerId === sellerId);
 
   return (
     <AppContext.Provider
@@ -409,11 +640,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         activeSellerId,
         isOwnerAdminLoggedIn,
         filter,
+        favorites,
+        specials,
+        competitions,
+        competitionEntries,
         setActiveSellerId,
         loginOwner,
         logoutOwner,
         updateOwnerPassword,
         updateOwnerBankingDetails,
+        isFavorite,
+        toggleFavorite,
+        clearFavorites,
         registerSeller,
         updateSeller,
         updateSellerStatus,
@@ -425,10 +663,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         deleteInventoryItem,
         deleteMultipleInventoryItems,
         incrementViews,
+        addSpecial,
+        deleteSpecial,
+        incrementSpecialViews,
+        addCompetition,
+        updateCompetition,
+        submitCompetitionEntry,
+        updateCompetitionEntryStatus,
         setFilter,
         resetFilters,
         getSellerById,
-        getSellerListings
+        getSellerListings,
+        getSellerSpecials,
+        getSellerEntries
       }}
     >
       {children}

@@ -66,6 +66,43 @@ service cloud.firestore {
       );
     }
 
+    // Seller Specials & Promotions
+    match /specials/{specialId} {
+      allow read: if true;
+      allow create: if isValidId(specialId) &&
+        incoming().sellerId is string &&
+        incoming().title is string &&
+        incoming().specialPriceZar is number;
+      allow update: if isValidId(specialId) && (
+        isAdmin() ||
+        incoming().diff(existing()).affectedKeys().hasOnly(['views']) ||
+        (incoming().sellerId == existing().sellerId)
+      );
+      allow delete: if isValidId(specialId) && (
+        isAdmin() || true
+      );
+    }
+
+    // Seller Competitions & Challenges
+    match /competitions/{competitionId} {
+      allow read: if true;
+      allow create, update, delete: if isValidId(competitionId) && (
+        isAdmin() || true
+      );
+    }
+
+    // Competition Entries & Showcase submissions
+    match /competition_entries/{entryId} {
+      allow read: if true;
+      allow create: if isValidId(entryId) &&
+        incoming().competitionId is string &&
+        incoming().sellerId is string &&
+        incoming().entryTitle is string;
+      allow update, delete: if isValidId(entryId) && (
+        isAdmin() || true
+      );
+    }
+
     // Owner Settings & Banking details
     match /owner_settings/{configId} {
       allow read: if true;

@@ -25,7 +25,8 @@ import {
   RotateCcw,
   Layers,
   ArrowRight,
-  Trash2
+  Trash2,
+  Heart
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import {
@@ -55,7 +56,7 @@ export const SearchEngineModal: React.FC<SearchEngineModalProps> = ({
   initialQuery = '',
   onOpenSellerPortal
 }) => {
-  const { inventory, sellers, setFilter, isOwnerAdminLoggedIn, deleteInventoryItem } = useApp();
+  const { inventory, sellers, setFilter, isOwnerAdminLoggedIn, deleteInventoryItem, favorites, isFavorite, toggleFavorite } = useApp();
 
   const [query, setQuery] = useState(initialQuery);
   const [selectedCategory, setSelectedCategory] = useState<CategoryType | 'all'>('all');
@@ -66,6 +67,7 @@ export const SearchEngineModal: React.FC<SearchEngineModalProps> = ({
   const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
   const [onlyWithPartNumber, setOnlyWithPartNumber] = useState<boolean>(false);
+  const [onlyFavorites, setOnlyFavorites] = useState<boolean>(false);
   const [expandSynonyms, setExpandSynonyms] = useState<boolean>(true);
   const [sortBy, setSortBy] = useState<SearchOptions['sortBy']>('relevance');
   const [itemPendingDeleteId, setItemPendingDeleteId] = useState<string | null>(null);
@@ -116,6 +118,8 @@ export const SearchEngineModal: React.FC<SearchEngineModalProps> = ({
       minPrice,
       maxPrice,
       onlyWithPartNumber,
+      onlyFavorites,
+      favoriteIds: favorites,
       sortBy,
       expandSynonyms
     });
@@ -130,6 +134,8 @@ export const SearchEngineModal: React.FC<SearchEngineModalProps> = ({
     minPrice,
     maxPrice,
     onlyWithPartNumber,
+    onlyFavorites,
+    favorites,
     sortBy,
     expandSynonyms
   ]);
@@ -470,9 +476,23 @@ export const SearchEngineModal: React.FC<SearchEngineModalProps> = ({
             </div>
           )}
 
-          {/* Popular Makes Quick Filter */}
+          {/* Popular Makes & Saved Quick Filter */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider shrink-0 mr-1">
+            {/* Saved Items Filter Pill */}
+            <button
+              onClick={() => setOnlyFavorites(!onlyFavorites)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer border ${
+                onlyFavorites
+                  ? 'bg-rose-600 border-rose-500 text-white shadow-sm'
+                  : 'bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-800'
+              }`}
+              title="Show only locally saved parts"
+            >
+              <Heart className={`w-3.5 h-3.5 ${onlyFavorites || favorites.length > 0 ? 'fill-rose-500 text-rose-500' : 'text-slate-400'} ${onlyFavorites ? 'fill-white text-white' : ''}`} />
+              <span>Saved ({favorites.length})</span>
+            </button>
+
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider shrink-0 mx-1">
               Top Makes:
             </span>
             {POPULAR_MAKES.map((m) => {
@@ -654,6 +674,24 @@ export const SearchEngineModal: React.FC<SearchEngineModalProps> = ({
                       </div>
 
                       <div className="flex items-center gap-1.5">
+                        {/* Heart Favorite Toggle */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavorite(item.id);
+                          }}
+                          className={`p-1.5 rounded-xl border transition-all flex items-center justify-center cursor-pointer ${
+                            isFavorite(item.id)
+                              ? 'bg-rose-600 border-rose-500 text-white shadow-sm'
+                              : 'bg-slate-900 hover:bg-slate-800 border-slate-700/70 text-slate-400 hover:text-rose-400'
+                          }`}
+                          title={isFavorite(item.id) ? 'Remove from Saved Parts' : 'Save to Favorites'}
+                          aria-label={isFavorite(item.id) ? 'Remove from Saved Parts' : 'Save to Favorites'}
+                        >
+                          <Heart className={`w-3.5 h-3.5 ${isFavorite(item.id) ? 'fill-white text-white' : 'text-slate-300'}`} />
+                        </button>
+
                         {isOwnerAdminLoggedIn && (
                           <button
                             type="button"

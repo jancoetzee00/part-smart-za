@@ -10,7 +10,8 @@ import {
   Sparkles,
   AlertCircle,
   PhoneCall,
-  Trash2
+  Trash2,
+  Heart
 } from 'lucide-react';
 import { InventoryItem } from '../types';
 import { useApp } from '../context/AppContext';
@@ -24,10 +25,11 @@ interface InventoryCardProps {
 }
 
 export const InventoryCard: React.FC<InventoryCardProps> = ({ item, onSelect }) => {
-  const { sellers, incrementViews, isOwnerAdminLoggedIn, deleteInventoryItem } = useApp();
+  const { sellers, incrementViews, isOwnerAdminLoggedIn, deleteInventoryItem, isFavorite, toggleFavorite } = useApp();
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
+  const isFav = isFavorite(item.id);
   const seller = sellers.find(s => s.id === item.sellerId);
   const isSellerActive = seller?.subscriptionStatus === 'active';
 
@@ -131,13 +133,32 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({ item, onSelect }) 
             }}
           />
 
-          {/* Featured Badge */}
-          {item.isFeatured && (
-            <div className="absolute top-2.5 left-2.5 bg-amber-500 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-md shadow flex items-center gap-1 z-10">
-              <Sparkles className="w-3 h-3 fill-slate-950" />
-              FEATURED
-            </div>
-          )}
+          {/* Top Left: Heart Favorite Toggle & Featured Badge */}
+          <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFavorite(item.id);
+              }}
+              className={`p-1.5 rounded-full transition-all duration-200 cursor-pointer backdrop-blur-md flex items-center justify-center ${
+                isFav
+                  ? 'bg-rose-600 text-white border border-rose-400 shadow-md shadow-rose-950/60 scale-105 hover:bg-rose-500'
+                  : 'bg-slate-950/75 hover:bg-slate-900 text-slate-300 hover:text-rose-400 border border-slate-700/60 shadow-sm hover:scale-110 active:scale-95'
+              }`}
+              title={isFav ? 'Remove from Favorites' : 'Save to Favorites'}
+              aria-label={isFav ? 'Remove from Favorites' : 'Save to Favorites'}
+            >
+              <Heart className={`w-3.5 h-3.5 transition-all ${isFav ? 'fill-white text-white' : 'text-slate-200'}`} />
+            </button>
+
+            {item.isFeatured && (
+              <div className="bg-amber-500 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-md shadow flex items-center gap-1">
+                <Sparkles className="w-3 h-3 fill-slate-950" />
+                FEATURED
+              </div>
+            )}
+          </div>
 
           {/* Condition Badge & Owner Delete Button */}
           <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1.5">

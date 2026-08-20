@@ -10,6 +10,7 @@ import { AiPartAssistantModal } from './components/AiPartAssistantModal';
 import { SellersDirectoryModal } from './components/SellersDirectoryModal';
 import { SearchEngineModal } from './components/SearchEngineModal';
 import { SearchVisibilityModal } from './components/SearchVisibilityModal';
+import { SpecialsAndCompetitionsModal } from './components/SpecialsAndCompetitionsModal';
 import {
   HardHat,
   Truck,
@@ -25,7 +26,9 @@ import {
   Heart,
   Search,
   Globe,
-  Sparkles
+  Sparkles,
+  Flame,
+  Trophy
 } from 'lucide-react';
 import { isLocalAppEnvironment } from './lib/env';
 
@@ -36,6 +39,8 @@ const MainContent: React.FC = () => {
   const [isSellersDirectoryOpen, setIsSellersDirectoryOpen] = useState(false);
   const [isSearchEngineOpen, setIsSearchEngineOpen] = useState(false);
   const [isVisibilityModalOpen, setIsVisibilityModalOpen] = useState(false);
+  const [isSpecialsCompetitionsOpen, setIsSpecialsCompetitionsOpen] = useState(false);
+  const [specialsModalTab, setSpecialsModalTab] = useState<'specials' | 'competitions' | 'post_special' | 'enter_competition'>('specials');
   const [searchInitialQuery, setSearchInitialQuery] = useState('');
 
   const { ownerSettings, inventory, sellers, isOwnerAdminLoggedIn } = useApp();
@@ -62,10 +67,26 @@ const MainContent: React.FC = () => {
       if (window.location.hash === '#owner' || window.location.hash === '#admin') {
         setIsOwnerAdminOpen(true);
       }
+      if (window.location.hash === '#specials') {
+        setSpecialsModalTab('specials');
+        setIsSpecialsCompetitionsOpen(true);
+      }
+      if (window.location.hash === '#competitions') {
+        setSpecialsModalTab('competitions');
+        setIsSpecialsCompetitionsOpen(true);
+      }
     };
 
     if (window.location.hash === '#owner' || window.location.hash === '#admin') {
       setIsOwnerAdminOpen(true);
+    }
+    if (window.location.hash === '#specials') {
+      setSpecialsModalTab('specials');
+      setIsSpecialsCompetitionsOpen(true);
+    }
+    if (window.location.hash === '#competitions') {
+      setSpecialsModalTab('competitions');
+      setIsSpecialsCompetitionsOpen(true);
     }
 
     window.addEventListener('keydown', handleKeyDown);
@@ -92,6 +113,10 @@ const MainContent: React.FC = () => {
         onOpenSellersDirectory={() => setIsSellersDirectoryOpen(true)}
         onOpenSearchEngine={() => handleOpenSearchEngineWithQuery('')}
         onOpenVisibilityCenter={() => setIsVisibilityModalOpen(true)}
+        onOpenSpecialsCompetitions={() => {
+          setSpecialsModalTab('specials');
+          setIsSpecialsCompetitionsOpen(true);
+        }}
       />
 
       {/* Hero Banner */}
@@ -100,6 +125,10 @@ const MainContent: React.FC = () => {
         onOpenSellersDirectory={() => setIsSellersDirectoryOpen(true)}
         onOpenSearchEngine={handleOpenSearchEngineWithQuery}
         onOpenVisibilityCenter={() => setIsVisibilityModalOpen(true)}
+        onOpenSpecialsCompetitions={() => {
+          setSpecialsModalTab('specials');
+          setIsSpecialsCompetitionsOpen(true);
+        }}
       />
 
       {/* Filter Toolbar */}
@@ -266,6 +295,24 @@ const MainContent: React.FC = () => {
             setIsSellerPortalOpen(false);
             setIsOwnerAdminOpen(true);
           }}
+          onOpenSpecialsCompetitions={() => {
+            setIsSellerPortalOpen(false);
+            setSpecialsModalTab('post_special');
+            setIsSpecialsCompetitionsOpen(true);
+          }}
+        />
+      )}
+
+      {/* Specials & Competitions Modal */}
+      {isSpecialsCompetitionsOpen && (
+        <SpecialsAndCompetitionsModal
+          isOpen={isSpecialsCompetitionsOpen}
+          onClose={() => setIsSpecialsCompetitionsOpen(false)}
+          initialTab={specialsModalTab}
+          onOpenSellerPortal={() => {
+            setIsSpecialsCompetitionsOpen(false);
+            setIsSellerPortalOpen(true);
+          }}
         />
       )}
 
@@ -283,8 +330,8 @@ const MainContent: React.FC = () => {
         />
       )}
 
-      {/* Sellers Directory Modal */}
-      {isSellersDirectoryOpen && (
+      {/* Sellers Directory Modal - Local App / Admin Only */}
+      {isSellersDirectoryOpen && showOwnerControls && (
         <SellersDirectoryModal
           onClose={() => setIsSellersDirectoryOpen(false)}
           onOpenSellerPortal={() => {
