@@ -497,94 +497,106 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               </div>
             </div>
 
-            {/* Specials & Competitions Highlight Card */}
-            <div
-              onClick={onOpenSpecialsCompetitions}
-              className="bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-rose-500/15 border border-amber-500/40 hover:border-amber-400 p-3.5 rounded-2xl flex items-center justify-between gap-3.5 cursor-pointer transition-all shadow-md group"
-            >
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2 text-xs font-black text-amber-300">
-                  <Flame className="w-4 h-4 text-orange-400 animate-pulse fill-orange-400" />
-                  <span>Seller Specials & Yard Challenges</span>
-                  <span className="bg-amber-400 text-slate-950 text-[9px] px-1.5 py-0.2 rounded-full font-black uppercase">
-                    {specials.length} Active Deals
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-300">
-                  Flash clearance deals, machine bundles & R45,000+ yard trophy competitions.
-                </p>
-              </div>
-
-              <div className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 group-hover:from-amber-400 group-hover:to-orange-400 text-slate-950 font-black text-xs rounded-xl transition-all shrink-0 flex items-center gap-1 shadow-md">
-                <span>View Deals</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </div>
-            </div>
-
-            {/* Search Engine Shortcut Card */}
-            <div
-              onClick={() => onOpenSearchEngine()}
-              className="bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/20 border border-slate-800 hover:border-amber-500/50 p-3.5 rounded-2xl flex items-center justify-between gap-3.5 cursor-pointer transition-all shadow-md group"
-            >
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
-                  <Search className="w-3.5 h-3.5" />
-                  <span>Smart Search Engine Command Center</span>
-                </div>
-                <p className="text-[11px] text-slate-300">
-                  Search OEM part codes, machine brands, synonyms & price filters.
-                </p>
-              </div>
-
-              <div className="px-3 py-1.5 bg-amber-500 group-hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl transition-colors shrink-0 flex items-center gap-1">
-                <span>Launch</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </div>
-            </div>
-
-            {/* Desktop Link & App Access Card */}
-            <div
-              onClick={onOpenDesktopShortcut}
-              className="bg-gradient-to-r from-cyan-950/40 via-slate-900 to-slate-900 border border-cyan-500/30 hover:border-cyan-400 p-3.5 rounded-2xl flex items-center justify-between gap-3.5 cursor-pointer transition-all shadow-md group"
-            >
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-300">
-                  <Monitor className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Desktop App & 1-Click Desktop Link</span>
-                  <span className="bg-cyan-500/20 text-cyan-300 text-[9px] px-1.5 py-0.2 rounded font-bold uppercase">
-                    Shortcut
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-300">
-                  Download 1-click Windows/Mac shortcut or install standalone app on your PC.
-                </p>
-              </div>
-
-              <div className="px-3 py-1.5 bg-cyan-600 group-hover:bg-cyan-500 text-white font-bold text-xs rounded-xl transition-colors shrink-0 flex items-center gap-1 shadow-sm">
-                <span>Access</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </div>
-            </div>
-
-            {/* Seller Subscription CTA Box */}
-            <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-2xl flex items-center justify-between gap-3.5">
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300">
-                  <CreditCard className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Are you a Spares Yard or Breaker?</span>
-                </div>
-                <p className="text-[11px] text-slate-400">
-                  Subscribe from <strong>R450/month</strong> for nationwide search visibility.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={onOpenSellerPortal}
-                className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 font-bold text-xs rounded-xl transition-all whitespace-nowrap shrink-0 flex items-center gap-1 cursor-pointer"
+            {/* Quick Action Grid (2-column on sm, 1-col on xs) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {/* Specials & Competitions Highlight Card */}
+              <div
+                onClick={onOpenSpecialsCompetitions}
+                className="bg-gradient-to-br from-amber-500/15 via-orange-500/10 to-slate-900 border border-amber-500/30 hover:border-amber-400 p-3 rounded-2xl flex flex-col justify-between gap-2.5 cursor-pointer transition-all shadow-md group hover:scale-[1.01]"
               >
-                Plans <ChevronRight className="w-3.5 h-3.5" />
-              </button>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between gap-1.5">
+                    <div className="flex items-center gap-1.5 text-xs font-black text-amber-300">
+                      <Flame className="w-4 h-4 text-orange-400 fill-orange-400" />
+                      <span>Specials & Deals</span>
+                    </div>
+                    <span className="bg-amber-400 text-slate-950 text-[9px] px-1.5 py-0.2 rounded-full font-black uppercase">
+                      {specials.length} Active
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-snug">
+                    Flash clearance deals & yard trophy challenges.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 border-t border-amber-500/20 text-xs text-amber-400 font-bold group-hover:text-amber-300">
+                  <span>Explore Deals</span>
+                  <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </div>
+
+              {/* Desktop App Shortcut Card */}
+              <div
+                onClick={onOpenDesktopShortcut}
+                className="bg-gradient-to-br from-cyan-950/40 via-slate-900 to-slate-900 border border-cyan-500/30 hover:border-cyan-400 p-3 rounded-2xl flex flex-col justify-between gap-2.5 cursor-pointer transition-all shadow-md group hover:scale-[1.01]"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between gap-1.5">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-300">
+                      <Monitor className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Desktop App</span>
+                    </div>
+                    <span className="bg-cyan-500/20 text-cyan-300 text-[9px] px-1.5 py-0.2 rounded font-bold uppercase">
+                      1-Click
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-snug">
+                    Download Windows/Mac shortcut or install PC app.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 border-t border-cyan-500/20 text-xs text-cyan-400 font-bold group-hover:text-cyan-300">
+                  <span>Download Shortcut</span>
+                  <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </div>
+
+              {/* Search Engine Shortcut Card */}
+              <div
+                onClick={() => onOpenSearchEngine()}
+                className="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-850 border border-slate-800 hover:border-amber-500/50 p-3 rounded-2xl flex flex-col justify-between gap-2.5 cursor-pointer transition-all shadow-md group hover:scale-[1.01]"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
+                    <Search className="w-3.5 h-3.5" />
+                    <span>Search Engine</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-snug">
+                    OEM part codes, synonyms & price filters.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 border-t border-slate-800 text-xs text-slate-300 font-bold group-hover:text-amber-400">
+                  <span>Open ⌘K Engine</span>
+                  <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </div>
+
+              {/* Seller Subscription CTA Box */}
+              <div
+                onClick={onOpenSellerPortal}
+                className="bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/20 border border-slate-800 hover:border-amber-500/40 p-3 rounded-2xl flex flex-col justify-between gap-2.5 cursor-pointer transition-all shadow-md group hover:scale-[1.01]"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between gap-1.5">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300">
+                      <CreditCard className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Yard Sellers</span>
+                    </div>
+                    <span className="bg-amber-500/20 text-amber-300 text-[9px] px-1.5 py-0.2 rounded font-bold">
+                      From R450/m
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-snug">
+                    List heavy spares & get direct WhatsApp leads.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 border-t border-slate-800 text-xs text-amber-400 font-bold group-hover:text-amber-300">
+                  <span>Join as Seller</span>
+                  <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </div>
             </div>
 
           </div>
