@@ -1,0 +1,24 @@
+{
+  "short_name": "Part-Smart ZA",
+  "name": "Part-Smart ZA | Heavy Equipment, Truck & Car Spares Marketplace",
+  "description": "South Africa's premier advertising network & search engine for heavy machinery, earthmoving spares, commercial truck parts and scrap yards.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#0f172a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23f59e0b'/><path d='M30 70 L50 30 L70 70 Z' fill='%230f172a'/><circle cx='50' cy='55' r='8' fill='%23f59e0b'/></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "shopping", "utilities"]
+}

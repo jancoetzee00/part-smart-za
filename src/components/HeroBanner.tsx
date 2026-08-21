@@ -17,7 +17,8 @@ import {
   ArrowRight,
   Check,
   Flame,
-  Trophy
+  Trophy,
+  Monitor
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { PROVINCES_LIST } from '../data/initialData';
@@ -32,6 +33,7 @@ interface HeroBannerProps {
   onOpenSearchEngine: (initialQuery?: string) => void;
   onOpenVisibilityCenter: () => void;
   onOpenSpecialsCompetitions: () => void;
+  onOpenDesktopShortcut: () => void;
 }
 
 export const HeroBanner: React.FC<HeroBannerProps> = ({
@@ -39,7 +41,8 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   onOpenSellersDirectory,
   onOpenSearchEngine,
   onOpenVisibilityCenter,
-  onOpenSpecialsCompetitions
+  onOpenSpecialsCompetitions,
+  onOpenDesktopShortcut
 }) => {
   const { filter, setFilter, inventory, sellers, specials, competitions, isOwnerAdminLoggedIn } = useApp();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -535,6 +538,30 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
 
               <div className="px-3 py-1.5 bg-amber-500 group-hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl transition-colors shrink-0 flex items-center gap-1">
                 <span>Launch</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </div>
+            </div>
+
+            {/* Desktop Link & App Access Card */}
+            <div
+              onClick={onOpenDesktopShortcut}
+              className="bg-gradient-to-r from-cyan-950/40 via-slate-900 to-slate-900 border border-cyan-500/30 hover:border-cyan-400 p-3.5 rounded-2xl flex items-center justify-between gap-3.5 cursor-pointer transition-all shadow-md group"
+            >
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-300">
+                  <Monitor className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Desktop App & 1-Click Desktop Link</span>
+                  <span className="bg-cyan-500/20 text-cyan-300 text-[9px] px-1.5 py-0.2 rounded font-bold uppercase">
+                    Shortcut
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-300">
+                  Download 1-click Windows/Mac shortcut or install standalone app on your PC.
+                </p>
+              </div>
+
+              <div className="px-3 py-1.5 bg-cyan-600 group-hover:bg-cyan-500 text-white font-bold text-xs rounded-xl transition-colors shrink-0 flex items-center gap-1 shadow-sm">
+                <span>Access</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </div>
             </div>

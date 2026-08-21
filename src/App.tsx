@@ -11,6 +11,7 @@ import { SellersDirectoryModal } from './components/SellersDirectoryModal';
 import { SearchEngineModal } from './components/SearchEngineModal';
 import { SearchVisibilityModal } from './components/SearchVisibilityModal';
 import { SpecialsAndCompetitionsModal } from './components/SpecialsAndCompetitionsModal';
+import { DesktopShortcutModal } from './components/DesktopShortcutModal';
 import {
   HardHat,
   Truck,
@@ -28,7 +29,8 @@ import {
   Globe,
   Sparkles,
   Flame,
-  Trophy
+  Trophy,
+  Monitor
 } from 'lucide-react';
 import { isLocalAppEnvironment } from './lib/env';
 
@@ -40,6 +42,7 @@ const MainContent: React.FC = () => {
   const [isSearchEngineOpen, setIsSearchEngineOpen] = useState(false);
   const [isVisibilityModalOpen, setIsVisibilityModalOpen] = useState(false);
   const [isSpecialsCompetitionsOpen, setIsSpecialsCompetitionsOpen] = useState(false);
+  const [isDesktopShortcutOpen, setIsDesktopShortcutOpen] = useState(false);
   const [specialsModalTab, setSpecialsModalTab] = useState<'specials' | 'competitions' | 'post_special' | 'enter_competition'>('specials');
   const [searchInitialQuery, setSearchInitialQuery] = useState('');
 
@@ -75,6 +78,9 @@ const MainContent: React.FC = () => {
         setSpecialsModalTab('competitions');
         setIsSpecialsCompetitionsOpen(true);
       }
+      if (window.location.hash === '#desktop' || window.location.hash === '#shortcut') {
+        setIsDesktopShortcutOpen(true);
+      }
     };
 
     if (window.location.hash === '#owner' || window.location.hash === '#admin') {
@@ -87,6 +93,9 @@ const MainContent: React.FC = () => {
     if (window.location.hash === '#competitions') {
       setSpecialsModalTab('competitions');
       setIsSpecialsCompetitionsOpen(true);
+    }
+    if (window.location.hash === '#desktop' || window.location.hash === '#shortcut') {
+      setIsDesktopShortcutOpen(true);
     }
 
     window.addEventListener('keydown', handleKeyDown);
@@ -117,6 +126,7 @@ const MainContent: React.FC = () => {
           setSpecialsModalTab('specials');
           setIsSpecialsCompetitionsOpen(true);
         }}
+        onOpenDesktopShortcut={() => setIsDesktopShortcutOpen(true)}
       />
 
       {/* Hero Banner */}
@@ -129,6 +139,7 @@ const MainContent: React.FC = () => {
           setSpecialsModalTab('specials');
           setIsSpecialsCompetitionsOpen(true);
         }}
+        onOpenDesktopShortcut={() => setIsDesktopShortcutOpen(true)}
       />
 
       {/* Filter Toolbar */}
@@ -247,6 +258,15 @@ const MainContent: React.FC = () => {
               <span>Search Engine (⌘K)</span>
             </button>
             <span>•</span>
+            <button
+              onClick={() => setIsDesktopShortcutOpen(true)}
+              className="text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1 font-semibold cursor-pointer"
+              title="Download Desktop Link or Install App"
+            >
+              <Monitor className="w-3 h-3" />
+              <span>Desktop App / Shortcut</span>
+            </button>
+            <span>•</span>
             <button onClick={() => setIsSellerPortalOpen(true)} className="hover:text-amber-400 transition-colors cursor-pointer">
               Seller Portal
             </button>
@@ -327,6 +347,14 @@ const MainContent: React.FC = () => {
       {isAiAssistantOpen && (
         <AiPartAssistantModal
           onClose={() => setIsAiAssistantOpen(false)}
+        />
+      )}
+
+      {/* Desktop Link & App Shortcut Modal */}
+      {isDesktopShortcutOpen && (
+        <DesktopShortcutModal
+          isOpen={isDesktopShortcutOpen}
+          onClose={() => setIsDesktopShortcutOpen(false)}
         />
       )}
 

@@ -19,7 +19,9 @@ import {
   SlidersHorizontal,
   Heart,
   Flame,
-  Trophy
+  Trophy,
+  Monitor,
+  Download
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { CategoryType } from '../types';
@@ -33,6 +35,7 @@ interface HeaderProps {
   onOpenSearchEngine: () => void;
   onOpenVisibilityCenter: () => void;
   onOpenSpecialsCompetitions: () => void;
+  onOpenDesktopShortcut: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -42,7 +45,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSellersDirectory,
   onOpenSearchEngine,
   onOpenVisibilityCenter,
-  onOpenSpecialsCompetitions
+  onOpenSpecialsCompetitions,
+  onOpenDesktopShortcut
 }) => {
   const { filter, setFilter, activeSeller, isOwnerAdminLoggedIn, ownerSettings, sellers, favorites, specials, competitions } = useApp();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -84,6 +88,16 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="bg-orange-500 text-slate-950 px-1 py-0.2 rounded text-[9px] font-black">
                 {specials.length} DEALS
               </span>
+            </button>
+
+            {/* Desktop Link Shortcut */}
+            <button
+              onClick={onOpenDesktopShortcut}
+              className="text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1.5 font-semibold cursor-pointer"
+              title="Download Desktop Link or Install App"
+            >
+              <Monitor className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Desktop App</span>
             </button>
 
             {/* Search Engine & SEO Visibility */}
@@ -241,6 +255,16 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="bg-slate-950 text-amber-300 text-[10px] px-1.5 py-0.2 rounded-full font-bold">
               {specials.length}
             </span>
+          </button>
+
+          {/* Desktop Link Button */}
+          <button
+            onClick={onOpenDesktopShortcut}
+            className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-200 hover:text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+            title="Download 1-Click Desktop Link or Install App"
+          >
+            <Monitor className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Desktop Link</span>
           </button>
 
           {/* Saved Parts Button */}
@@ -403,6 +427,18 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Flame className="w-4 h-4 fill-slate-950" />
               <span>Seller Specials & Yard Competitions ({specials.length} Active Deals)</span>
+            </button>
+
+            {/* Desktop Link Button in Mobile Menu */}
+            <button
+              onClick={() => {
+                onOpenDesktopShortcut();
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full py-2.5 bg-gradient-to-r from-cyan-950/80 to-slate-800 hover:from-cyan-900/80 hover:to-slate-700 border border-cyan-500/40 text-cyan-300 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-md"
+            >
+              <Monitor className="w-4 h-4 text-cyan-400" />
+              <span>Desktop Link & App Install (1-Click)</span>
             </button>
 
             {/* Saved Parts Button in Mobile Menu */}
