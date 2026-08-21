@@ -12,6 +12,7 @@ import { SearchEngineModal } from './components/SearchEngineModal';
 import { SearchVisibilityModal } from './components/SearchVisibilityModal';
 import { SpecialsAndCompetitionsModal } from './components/SpecialsAndCompetitionsModal';
 import { DesktopShortcutModal } from './components/DesktopShortcutModal';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import {
   HardHat,
   Truck,
@@ -112,7 +113,7 @@ const MainContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col selection:bg-amber-500 selection:text-slate-950">
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col selection:bg-amber-500 selection:text-slate-950 pb-16 md:pb-0">
       
       {/* Header */}
       <Header
@@ -288,6 +289,18 @@ const MainContent: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      {/* Mobile Bottom Sticky Navigation Bar */}
+      <MobileBottomNav
+        onOpenSearchEngine={() => handleOpenSearchEngineWithQuery('')}
+        onOpenSpecials={() => {
+          setSpecialsModalTab('specials');
+          setIsSpecialsCompetitionsOpen(true);
+        }}
+        onOpenSellerPortal={() => setIsSellerPortalOpen(true)}
+        onOpenDesktopShortcut={() => setIsDesktopShortcutOpen(true)}
+        onOpenAiAssistant={() => setIsAiAssistantOpen(true)}
+      />
 
       {/* Search Engine Modal */}
       <SearchEngineModal

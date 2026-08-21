@@ -442,20 +442,30 @@ export const DesktopShortcutModal: React.FC<DesktopShortcutModalProps> = ({
             </h3>
 
             {/* Guide Tabs */}
-            <div className="flex items-center gap-1.5 border-b border-slate-800 pb-2">
+            <div className="flex items-center gap-1.5 border-b border-slate-800 pb-2 overflow-x-auto scrollbar-none">
               <button
                 onClick={() => setActiveGuideTab('chrome')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   activeGuideTab === 'chrome'
                     ? 'bg-amber-500 text-slate-950'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800'
                 }`}
               >
-                Google Chrome
+                Chrome (Android/PC)
+              </button>
+              <button
+                onClick={() => setActiveGuideTab('safari')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                  activeGuideTab === 'safari'
+                    ? 'bg-amber-500 text-slate-950'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                Safari (iPhone/Mac)
               </button>
               <button
                 onClick={() => setActiveGuideTab('edge')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   activeGuideTab === 'edge'
                     ? 'bg-amber-500 text-slate-950'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -464,24 +474,14 @@ export const DesktopShortcutModal: React.FC<DesktopShortcutModalProps> = ({
                 Microsoft Edge
               </button>
               <button
-                onClick={() => setActiveGuideTab('safari')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  activeGuideTab === 'safari'
-                    ? 'bg-amber-500 text-slate-950'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                }`}
-              >
-                Apple Safari (Mac / iOS)
-              </button>
-              <button
                 onClick={() => setActiveGuideTab('firefox')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   activeGuideTab === 'firefox'
                     ? 'bg-amber-500 text-slate-950'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800'
                 }`}
               >
-                Mozilla Firefox
+                Firefox
               </button>
             </div>
 

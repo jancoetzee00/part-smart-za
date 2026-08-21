@@ -18,7 +18,8 @@ import {
   Check,
   Flame,
   Trophy,
-  Monitor
+  Monitor,
+  X
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { PROVINCES_LIST } from '../data/initialData';
@@ -161,10 +162,10 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             {/* Live Search Engine Container */}
             <div ref={dropdownRef} className="relative pt-2">
               <form onSubmit={handleSearchSubmit}>
-                <div className="bg-slate-900/90 p-2 rounded-2xl border-2 border-slate-800 focus-within:border-amber-500 shadow-2xl backdrop-blur-md flex flex-col md:flex-row gap-2 transition-all">
+                <div className="bg-slate-900/95 p-2 rounded-2xl border-2 border-slate-800 focus-within:border-amber-500 shadow-2xl backdrop-blur-md flex flex-col md:flex-row gap-2 transition-all">
                   
                   {/* Search Text Input with Live Autocomplete */}
-                  <div className="flex-1 flex items-center gap-2.5 px-3 py-2 bg-slate-950 rounded-xl border border-slate-800 focus-within:border-amber-500 transition-colors">
+                  <div className="flex-1 flex items-center gap-2.5 px-3.5 py-2.5 bg-slate-950 rounded-xl border border-slate-800 focus-within:border-amber-500 transition-colors min-h-[46px]">
                     <Search className="w-4 h-4 text-amber-400 shrink-0" />
                     <input
                       type="text"
@@ -174,38 +175,54 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
                         setIsDropdownOpen(true);
                       }}
                       onFocus={() => setIsDropdownOpen(true)}
-                      placeholder="Search CAT excavator pump, Scania gearbox, Hilux GD-6 engine, diff..."
+                      placeholder="Search CAT pump, Scania gearbox, Hilux diff..."
                       className="w-full bg-transparent text-white text-xs md:text-sm placeholder:text-slate-500 focus:outline-none"
                     />
+                    {filter.searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFilter({ searchQuery: '' });
+                          setIsDropdownOpen(false);
+                        }}
+                        className="p-1 text-slate-400 hover:text-white rounded-full bg-slate-800 hover:bg-slate-700 cursor-pointer"
+                        title="Clear search"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
 
-                  {/* Province Selector */}
-                  <div className="flex items-center gap-2 px-3 py-2 bg-slate-950 rounded-xl border border-slate-800 shrink-0">
-                    <MapPin className="w-4 h-4 text-amber-400 shrink-0" />
-                    <select
-                      value={filter.province}
-                      onChange={(e) => setFilter({ province: e.target.value as SAProvince | 'all' })}
-                      className="bg-transparent text-slate-200 text-xs font-medium focus:outline-none cursor-pointer"
+                  {/* Province Selector & Submit Group on Mobile */}
+                  <div className="flex items-center gap-2">
+                    {/* Province Selector */}
+                    <div className="flex-1 md:flex-initial flex items-center gap-2 px-3 py-2.5 bg-slate-950 rounded-xl border border-slate-800 shrink-0 min-h-[46px]">
+                      <MapPin className="w-4 h-4 text-amber-400 shrink-0" />
+                      <select
+                        value={filter.province}
+                        onChange={(e) => setFilter({ province: e.target.value as SAProvince | 'all' })}
+                        className="w-full bg-transparent text-slate-200 text-xs font-medium focus:outline-none cursor-pointer"
+                      >
+                        <option value="all" className="bg-slate-900 text-white">All SA Provinces</option>
+                        {PROVINCES_LIST.map((prov) => (
+                          <option key={prov} value={prov} className="bg-slate-900 text-white">
+                            {prov}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Submit Search Button */}
+                    <button
+                      type="submit"
+                      className="flex-1 md:flex-initial px-5 py-2.5 min-h-[46px] bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2 shrink-0 cursor-pointer active:scale-95"
                     >
-                      <option value="all" className="bg-slate-900 text-white">All SA Provinces</option>
-                      {PROVINCES_LIST.map((prov) => (
-                        <option key={prov} value={prov} className="bg-slate-900 text-white">
-                          {prov}
-                        </option>
-                      ))}
-                    </select>
+                      <span>Search</span>
+                      <span className="hidden sm:inline-block bg-slate-950/20 text-[10px] px-1.5 py-0.5 rounded font-mono">
+                        ⌘K
+                      </span>
+                    </button>
                   </div>
-
-                  {/* Submit Search Button */}
-                  <button
-                    type="submit"
-                    className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2 shrink-0 cursor-pointer"
-                  >
-                    <span>Search</span>
-                    <span className="hidden sm:inline-block bg-slate-950/20 text-[10px] px-1.5 py-0.5 rounded font-mono">
-                      ⌘K
-                    </span>
-                  </button>
                 </div>
               </form>
 

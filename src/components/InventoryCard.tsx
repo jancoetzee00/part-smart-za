@@ -256,21 +256,21 @@ export const InventoryCard: React.FC<InventoryCardProps> = ({ item, onSelect }) 
               <button
                 type="button"
                 onClick={handleWhatsappClick}
-                className="col-span-8 sm:col-span-9 py-2 px-2.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-950/40 border border-emerald-400/30 flex items-center justify-center gap-1.5 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+                className="col-span-8 sm:col-span-9 min-h-[44px] py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-950/40 border border-emerald-400/30 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.98] cursor-pointer"
                 title="Send pre-filled WhatsApp inquiry to seller"
               >
-                <MessageSquare className="w-3.5 h-3.5 fill-white text-emerald-600 shrink-0" />
+                <MessageSquare className="w-4 h-4 fill-white text-emerald-600 shrink-0" />
                 <span className="truncate">WhatsApp Inquiry</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleOpenContactModal}
-                className="col-span-4 sm:col-span-3 py-2 px-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-200 hover:text-white border border-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                className="col-span-4 sm:col-span-3 min-h-[44px] py-2.5 px-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-200 hover:text-white border border-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-[0.98]"
                 title="View full seller phone and contact details"
               >
-                <PhoneCall className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span className="text-[11px] font-semibold">Call</span>
+                <PhoneCall className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="text-xs font-semibold">Call</span>
               </button>
             </div>
           </div>
